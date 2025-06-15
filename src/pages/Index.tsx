@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { WizardStepper } from '@/components/wizard/WizardStepper';
 import { RequirementsStep } from '@/components/wizard/RequirementsStep';
 import { BrainstormStep } from '@/components/wizard/BrainstormStep';
@@ -7,40 +7,28 @@ import { ResearchStep } from '@/components/wizard/ResearchStep';
 import { PRDStep } from '@/components/wizard/PRDStep';
 import { EpicsStep } from '@/components/wizard/EpicsStep';
 import { CompletionStep } from '@/components/wizard/CompletionStep';
-import { generateProjectId } from '@/lib/utils';
+import { AuthPage } from '@/components/auth/AuthPage';
+import { useAuth } from '@/hooks/useAuth';
+import { useProject } from '@/hooks/useProject';
+import { Button } from '@/components/ui/button';
+import { LogOut, User } from 'lucide-react';
 
 const Index = () => {
+  const { user, loading, signOut } = useAuth();
+  const { projectId, projectData, isLoading, updateProjectData, createNewProject } = useProject();
   const [currentStep, setCurrentStep] = useState(0);
-  const [projectId, setProjectId] = useState<string>('');
-  const [projectData, setProjectData] = useState({
-    requirements: '',
-    brainstorm: {},
-    research: '',
-    prd: '',
-    epics: ''
-  });
 
-  useEffect(() => {
-    // Get or create project ID
-    let storedProjectId = localStorage.getItem('promptflow_project_id');
-    if (!storedProjectId) {
-      storedProjectId = generateProjectId();
-      localStorage.setItem('promptflow_project_id', storedProjectId);
-    }
-    setProjectId(storedProjectId);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-orange-500">Loading...</div>
+      </div>
+    );
+  }
 
-    // Load existing project data
-    const storedData = localStorage.getItem(`promptflow_data_${storedProjectId}`);
-    if (storedData) {
-      setProjectData(JSON.parse(storedData));
-    }
-  }, []);
-
-  const updateProjectData = (step: string, data: any) => {
-    const newData = { ...projectData, [step]: data };
-    setProjectData(newData);
-    localStorage.setItem(`promptflow_data_${projectId}`, JSON.stringify(newData));
-  };
+  if (!user) {
+    return <AuthPage />;
+  }
 
   const steps = [
     { title: 'Requirements', description: 'Define your project idea' },
@@ -106,18 +94,9 @@ const Index = () => {
         return (
           <CompletionStep
             epics={projectData.epics}
-            onRestart={() => {
+            onRestart={async () => {
               setCurrentStep(0);
-              const newProjectId = generateProjectId();
-              setProjectId(newProjectId);
-              localStorage.setItem('promptflow_project_id', newProjectId);
-              setProjectData({
-                requirements: '',
-                brainstorm: {},
-                research: '',
-                prd: '',
-                epics: ''
-              });
+              await createNewProject();
             }}
           />
         );
@@ -125,6 +104,14 @@ const Index = () => {
         return null;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-orange-500">Loading project...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -138,8 +125,23 @@ const Index = () => {
               </div>
               <h1 className="text-xl font-semibold">PromptFlow</h1>
             </div>
-            <div className="text-sm text-gray-400">
-              Project: {projectId.slice(0, 8)}...
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-gray-400">
+                Project: {projectId.slice(0, 8)}...
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-400">
+                <User className="w-4 h-4" />
+                <span>{user.email}</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={signOut}
+                className="border-gray-600 text-gray-400 hover:text-white"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign out
+              </Button>
             </div>
           </div>
         </div>

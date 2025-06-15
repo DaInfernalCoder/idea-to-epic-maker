@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, ArrowLeft, FileText, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface PRDStepProps {
   research: string;
@@ -16,76 +18,36 @@ interface PRDStepProps {
 
 export function PRDStep({ research, brainstorm, value, onChange, onNext, onBack }: PRDStepProps) {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [prd, setPrd] = useState(value);
+  const { toast } = useToast();
 
   const generatePRD = async () => {
     setIsGenerating(true);
     
-    // Simulate API call for now - will be replaced with actual Claude integration
-    setTimeout(() => {
-      const mockPRD = `# Product Requirements Document (PRD)
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-prd', {
+        body: {
+          research,
+          brainstorm
+        }
+      });
 
-## 1. Executive Summary
-This document outlines the product requirements for a comprehensive software solution based on the provided specifications and technical research.
+      if (error) throw error;
 
-## 2. Product Overview
-### Vision
-To create a scalable, user-friendly application that addresses core user needs while maintaining technical excellence.
-
-### Objectives
-- Deliver a minimal viable product (MVP) within 3-6 months
-- Ensure scalability for future feature additions
-- Maintain high code quality and user experience standards
-
-## 3. Functional Requirements
-
-### 3.1 Core Features
-${brainstorm.features ? brainstorm.features.map((feature: string, index: number) => 
-  `#### ${index + 1}. ${feature}
-**Description**: Implementation of ${feature.toLowerCase()} functionality
-**Priority**: ${index < 3 ? 'High' : index < 6 ? 'Medium' : 'Low'}
-**Acceptance Criteria**:
-- Feature must be fully functional
-- Proper error handling implemented
-- Unit tests coverage > 80%`
-).join('\n\n') : ''}
-
-### 3.2 Technical Requirements
-- **Performance**: Page load times < 2 seconds
-- **Scalability**: Support for 10,000+ concurrent users
-- **Security**: Industry-standard authentication and data protection
-- **Accessibility**: WCAG 2.1 AA compliance
-
-## 4. Non-Functional Requirements
-- **Reliability**: 99.9% uptime
-- **Maintainability**: Modular architecture with clear documentation
-- **Usability**: Intuitive interface requiring minimal training
-
-## 5. Technology Stack
-${brainstorm.technologies ? brainstorm.technologies.map((tech: string) => `- ${tech}`).join('\n') : 'Technology stack to be determined based on requirements'}
-
-## 6. Success Metrics
-- User adoption rate > 70% within first month
-- Task completion rate > 85%
-- User satisfaction score > 4.5/5
-
-## 7. Constraints and Assumptions
-- Development timeline: 3-6 months
-- Team size: 2-4 developers
-- Budget considerations for infrastructure and tooling
-
-## 8. Future Considerations
-- Mobile application development
-- Advanced analytics and reporting
-- Third-party integrations
-- Enterprise features and scaling
-
-This PRD serves as the foundation for development planning and epic creation.`;
-
-      setPrd(mockPRD);
-      onChange(mockPRD);
+      onChange(data.prd);
+      toast({
+        title: "PRD Generated",
+        description: "Product Requirements Document has been created successfully.",
+      });
+    } catch (error) {
+      console.error('Error generating PRD:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PRD. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsGenerating(false);
-    }, 4000);
+    }
   };
 
   const handleNext = () => {
@@ -114,7 +76,7 @@ This PRD serves as the foundation for development planning and epic creation.`;
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!prd && !isGenerating && (
+          {!value && !isGenerating && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-orange-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FileText className="w-8 h-8 text-orange-500" />
@@ -147,7 +109,7 @@ This PRD serves as the foundation for development planning and epic creation.`;
             </div>
           )}
 
-          {prd && !isGenerating && (
+          {value && !isGenerating && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-green-500">✓ PRD generated successfully</span>
@@ -163,7 +125,7 @@ This PRD serves as the foundation for development planning and epic creation.`;
               </div>
               <div className="bg-gray-800 rounded-lg p-6 prose prose-invert max-w-none">
                 <pre className="whitespace-pre-wrap text-sm text-gray-300 font-mono">
-                  {prd}
+                  {value}
                 </pre>
               </div>
             </div>
@@ -178,7 +140,7 @@ This PRD serves as the foundation for development planning and epic creation.`;
         </Button>
         <Button
           onClick={handleNext}
-          disabled={!prd}
+          disabled={!value}
           className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-2 disabled:opacity-50"
         >
           Continue to Epics

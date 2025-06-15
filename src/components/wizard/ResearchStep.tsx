@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, ArrowLeft, Search, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface ResearchStepProps {
   requirements: string;
@@ -16,53 +18,36 @@ interface ResearchStepProps {
 
 export function ResearchStep({ requirements, brainstorm, value, onChange, onNext, onBack }: ResearchStepProps) {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [research, setResearch] = useState(value);
+  const { toast } = useToast();
 
   const generateResearch = async () => {
     setIsGenerating(true);
     
-    // Simulate API call for now - will be replaced with actual Perplexity integration
-    setTimeout(() => {
-      const mockResearch = `# Technical Research Report
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-research', {
+        body: {
+          requirements,
+          brainstorm
+        }
+      });
 
-## Project Analysis
-Based on your requirements for "${requirements.slice(0, 100)}...", we've identified key technical considerations and recommendations.
+      if (error) throw error;
 
-## Technology Stack Recommendations
-
-### Frontend Architecture
-- **Framework**: React with TypeScript for type safety and developer experience
-- **Styling**: Tailwind CSS for rapid, consistent UI development
-- **State Management**: Zustand or Redux Toolkit for complex state needs
-
-### Backend Considerations
-- **API Design**: RESTful APIs with OpenAPI documentation
-- **Database**: PostgreSQL for relational data, Redis for caching
-- **Authentication**: JWT tokens with refresh token rotation
-
-## Key Features Analysis
-${brainstorm.features ? brainstorm.features.map((feature: string) => `- **${feature}**: Industry standard implementations available`).join('\n') : ''}
-
-## Implementation Complexity
-- **Timeline Estimate**: 3-6 months for MVP
-- **Team Size**: 2-4 developers recommended
-- **Key Risks**: ${brainstorm.features?.length > 10 ? 'Feature scope may be too broad for initial release' : 'Manageable scope for initial implementation'}
-
-## Best Practices
-1. Start with core features and iterate
-2. Implement robust error handling and logging
-3. Plan for scalability from day one
-4. Consider progressive web app capabilities
-
-## Technology Alternatives
-${brainstorm.technologies ? brainstorm.technologies.map((tech: string) => `- ${tech}: Suitable for the proposed architecture`).join('\n') : ''}
-
-This research provides a foundation for creating detailed product requirements and development planning.`;
-
-      setResearch(mockResearch);
-      onChange(mockResearch);
+      onChange(data.research);
+      toast({
+        title: "Research Generated",
+        description: "Technical research has been completed successfully.",
+      });
+    } catch (error) {
+      console.error('Error generating research:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate research. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsGenerating(false);
-    }, 3000);
+    }
   };
 
   const handleNext = () => {
@@ -91,7 +76,7 @@ This research provides a foundation for creating detailed product requirements a
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!research && !isGenerating && (
+          {!value && !isGenerating && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-orange-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-8 h-8 text-orange-500" />
@@ -124,7 +109,7 @@ This research provides a foundation for creating detailed product requirements a
             </div>
           )}
 
-          {research && !isGenerating && (
+          {value && !isGenerating && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-green-500">✓ Research completed</span>
@@ -140,7 +125,7 @@ This research provides a foundation for creating detailed product requirements a
               </div>
               <div className="bg-gray-800 rounded-lg p-6 prose prose-invert max-w-none">
                 <pre className="whitespace-pre-wrap text-sm text-gray-300 font-mono">
-                  {research}
+                  {value}
                 </pre>
               </div>
             </div>
@@ -155,7 +140,7 @@ This research provides a foundation for creating detailed product requirements a
         </Button>
         <Button
           onClick={handleNext}
-          disabled={!research}
+          disabled={!value}
           className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-2 disabled:opacity-50"
         >
           Continue to PRD

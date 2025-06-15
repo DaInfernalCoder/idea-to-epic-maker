@@ -1,1 +1,11 @@
+
 project_id = "rwouwmhbqjpoiocykjac"
+
+[functions.generate-research]
+verify_jwt = false
+
+[functions.generate-prd]
+verify_jwt = false
+
+[functions.generate-epics]
+verify_jwt = false
