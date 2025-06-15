@@ -51,7 +51,7 @@ export function useProject(): ProjectState {
           p_project_id: storedProjectId
         });
 
-        if (data && data.length > 0) {
+        if (data && Array.isArray(data) && data.length > 0) {
           const projectState = data[0];
           setProjectId(storedProjectId);
           

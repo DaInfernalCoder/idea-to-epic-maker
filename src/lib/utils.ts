@@ -1,5 +1,5 @@
 
-import { clsx, type ClassValue } from "clsx"
+import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
@@ -7,5 +7,6 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function generateProjectId(): string {
-  return 'proj_' + Math.random().toString(36).substr(2, 9);
+  return Math.random().toString(36).substring(2, 15) + 
+         Math.random().toString(36).substring(2, 15);
 }

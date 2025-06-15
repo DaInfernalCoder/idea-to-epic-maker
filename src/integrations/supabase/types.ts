@@ -9,13 +9,131 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      doc: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          project_id: string
+          step: string
+          token_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          id?: string
+          project_id: string
+          step: string
+          token_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          project_id?: string
+          step?: string
+          token_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doc_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      prompt_log: {
+        Row: {
+          completion: string | null
+          created_at: string
+          id: string
+          model: string | null
+          project_id: string
+          prompt: string
+          step: string
+          token_cost: number | null
+        }
+        Insert: {
+          completion?: string | null
+          created_at?: string
+          id?: string
+          model?: string | null
+          project_id: string
+          prompt: string
+          step: string
+          token_cost?: number | null
+        }
+        Update: {
+          completion?: string | null
+          created_at?: string
+          id?: string
+          model?: string | null
+          project_id?: string
+          prompt?: string
+          step?: string
+          token_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prompt_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      fetch_project_state: {
+        Args: { p_project_id: string }
+        Returns: {
+          project_data: Json
+          docs_data: Json
+          recent_prompts: Json
+        }[]
+      }
+      save_doc: {
+        Args: {
+          p_project_id: string
+          p_step: string
+          p_content: Json
+          p_token_cost?: number
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
