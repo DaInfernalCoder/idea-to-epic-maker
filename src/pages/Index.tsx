@@ -67,6 +67,7 @@ const Index = () => {
             onChange={(value) => updateProjectData('research', value)}
             onNext={() => setCurrentStep(3)}
             onBack={() => setCurrentStep(1)}
+            projectId={projectId}
           />
         );
       case 3:
@@ -78,16 +79,20 @@ const Index = () => {
             onChange={(value) => updateProjectData('prd', value)}
             onNext={() => setCurrentStep(4)}
             onBack={() => setCurrentStep(2)}
+            projectId={projectId}
           />
         );
       case 4:
         return (
           <EpicsStep
             prd={projectData.prd}
+            research={projectData.research}
+            brainstorm={projectData.brainstorm}
             value={projectData.epics}
             onChange={(value) => updateProjectData('epics', value)}
             onNext={() => setCurrentStep(5)}
             onBack={() => setCurrentStep(3)}
+            projectId={projectId}
           />
         );
       case 5:

@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { research, brainstorm } = await req.json();
+    const { research, brainstorm, projectId } = await req.json();
     
     const prompt = `You are a product manager specializing in creating comprehensive Product Requirements Documents (PRDs). Based on the technical research and brainstorming results, create a detailed PRD.
 
@@ -36,6 +37,8 @@ Create a comprehensive PRD that includes:
 10. Future Roadmap Considerations
 
 Format as a professional markdown document with clear sections, bullet points, and actionable specifications that a development team can use to build the product.`;
+
+    console.log('Generating PRD with Claude Sonnet 4 model');
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -64,6 +67,31 @@ Format as a professional markdown document with clear sections, bullet points, a
 
     const data = await response.json();
     const prd = data.content[0].text;
+
+    // Log the prompt if projectId is provided
+    if (projectId) {
+      try {
+        const supabase = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        await supabase.from('prompt_log').insert({
+          project_id: projectId,
+          step: 'prd',
+          prompt: prompt,
+          completion: prd,
+          model: 'claude-sonnet-4-20250514',
+          token_cost: data.usage?.input_tokens + data.usage?.output_tokens || 0
+        });
+
+        console.log('Successfully logged PRD generation prompt');
+      } catch (logError) {
+        console.error('Failed to log prompt, but continuing:', logError);
+      }
+    }
+
+    console.log('Successfully generated PRD');
 
     return new Response(
       JSON.stringify({ prd }),

@@ -121,6 +121,7 @@ export function useProject(): ProjectState {
           .single();
 
         if (error) throw error;
+        console.log('Created new project in Supabase:', newProjectId);
       }
 
       // Update local state
@@ -151,13 +152,15 @@ export function useProject(): ProjectState {
     localStorage.setItem(`promptflow_data_${projectId}`, JSON.stringify(newData));
 
     // Try to sync to Supabase if user is authenticated and not a guest
-    if (user && user.id !== 'guest-user') {
+    if (user && user.id !== 'guest-user' && projectId) {
       try {
+        console.log(`Syncing ${step} data to Supabase for project ${projectId}`);
         await supabase.rpc('save_doc', {
           p_project_id: projectId,
           p_step: step,
           p_content: data
         });
+        console.log(`Successfully synced ${step} data to Supabase`);
       } catch (error) {
         console.error('Error syncing to Supabase:', error);
         // Continue working in localStorage-only mode

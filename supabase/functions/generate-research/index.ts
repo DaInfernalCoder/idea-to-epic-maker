@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { requirements, brainstorm } = await req.json();
+    const { requirements, brainstorm, projectId } = await req.json();
     
     const prompt = `You are a technical research analyst. Analyze the following project requirements and brainstorming results to provide comprehensive technical research.
 
@@ -31,6 +32,8 @@ Please provide a detailed technical research report covering:
 6. Development timeline estimates
 
 Format the response as a well-structured markdown document with clear sections and actionable insights.`;
+
+    console.log('Generating research with Perplexity sonar-reasoning-pro model');
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -63,6 +66,31 @@ Format the response as a well-structured markdown document with clear sections a
 
     const data = await response.json();
     const research = data.choices[0].message.content;
+
+    // Log the prompt if projectId is provided
+    if (projectId) {
+      try {
+        const supabase = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        await supabase.from('prompt_log').insert({
+          project_id: projectId,
+          step: 'research',
+          prompt: prompt,
+          completion: research,
+          model: 'sonar-reasoning-pro',
+          token_cost: data.usage?.total_tokens || 0
+        });
+
+        console.log('Successfully logged research generation prompt');
+      } catch (logError) {
+        console.error('Failed to log prompt, but continuing:', logError);
+      }
+    }
+
+    console.log('Successfully generated research');
 
     return new Response(
       JSON.stringify({ research }),

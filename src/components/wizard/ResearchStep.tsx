@@ -14,9 +14,10 @@ interface ResearchStepProps {
   onChange: (value: string) => void;
   onNext: () => void;
   onBack: () => void;
+  projectId?: string;
 }
 
-export function ResearchStep({ requirements, brainstorm, value, onChange, onNext, onBack }: ResearchStepProps) {
+export function ResearchStep({ requirements, brainstorm, value, onChange, onNext, onBack, projectId }: ResearchStepProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
@@ -24,10 +25,13 @@ export function ResearchStep({ requirements, brainstorm, value, onChange, onNext
     setIsGenerating(true);
     
     try {
+      console.log('Calling generate-research with projectId:', projectId);
+      
       const { data, error } = await supabase.functions.invoke('generate-research', {
         body: {
           requirements,
-          brainstorm
+          brainstorm,
+          projectId
         }
       });
 

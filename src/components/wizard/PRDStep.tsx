@@ -14,9 +14,10 @@ interface PRDStepProps {
   onChange: (value: string) => void;
   onNext: () => void;
   onBack: () => void;
+  projectId?: string;
 }
 
-export function PRDStep({ research, brainstorm, value, onChange, onNext, onBack }: PRDStepProps) {
+export function PRDStep({ research, brainstorm, value, onChange, onNext, onBack, projectId }: PRDStepProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
@@ -24,10 +25,13 @@ export function PRDStep({ research, brainstorm, value, onChange, onNext, onBack 
     setIsGenerating(true);
     
     try {
+      console.log('Calling generate-prd with projectId:', projectId);
+      
       const { data, error } = await supabase.functions.invoke('generate-prd', {
         body: {
           research,
-          brainstorm
+          brainstorm,
+          projectId
         }
       });
 

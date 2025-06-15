@@ -9,13 +9,16 @@ import { useToast } from '@/hooks/use-toast';
 
 interface EpicsStepProps {
   prd: string;
+  research: string;
+  brainstorm: any;
   value: string;
   onChange: (value: string) => void;
   onNext: () => void;
   onBack: () => void;
+  projectId?: string;
 }
 
-export function EpicsStep({ prd, value, onChange, onNext, onBack }: EpicsStepProps) {
+export function EpicsStep({ prd, research, brainstorm, value, onChange, onNext, onBack, projectId }: EpicsStepProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
@@ -23,9 +26,19 @@ export function EpicsStep({ prd, value, onChange, onNext, onBack }: EpicsStepPro
     setIsGenerating(true);
     
     try {
+      console.log('Calling generate-epics with full context and projectId:', { 
+        hasPrd: !!prd, 
+        hasResearch: !!research, 
+        hasBrainstorm: !!brainstorm,
+        projectId 
+      });
+      
       const { data, error } = await supabase.functions.invoke('generate-epics', {
         body: {
-          prd
+          prd,
+          research,
+          brainstorm,
+          projectId
         }
       });
 
@@ -34,7 +47,7 @@ export function EpicsStep({ prd, value, onChange, onNext, onBack }: EpicsStepPro
       onChange(data.epics);
       toast({
         title: "Epics Generated",
-        description: "Development epics and tickets have been created successfully.",
+        description: "Development epics and tickets have been created with full context from research and brainstorming.",
       });
     } catch (error) {
       console.error('Error generating epics:', error);
@@ -64,7 +77,7 @@ export function EpicsStep({ prd, value, onChange, onNext, onBack }: EpicsStepPro
           Development Epics & Tickets
         </h2>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-          Break down your PRD into actionable development epics and detailed tickets ready for implementation.
+          Break down your PRD into actionable development epics and detailed tickets using insights from technical research and brainstorming.
         </p>
       </div>
 
@@ -75,7 +88,7 @@ export function EpicsStep({ prd, value, onChange, onNext, onBack }: EpicsStepPro
             Development Plan
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Organized epics and tickets for agile development
+            Organized epics and tickets for agile development with technical research insights
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -86,15 +99,21 @@ export function EpicsStep({ prd, value, onChange, onNext, onBack }: EpicsStepPro
               </div>
               <h3 className="text-lg font-medium text-white mb-2">Ready to Plan Development</h3>
               <p className="text-gray-400 mb-6">
-                Transform your PRD into organized epics and actionable development tickets.
+                Transform your PRD into organized epics and actionable development tickets using insights from technical research and brainstorming.
               </p>
               <Button
                 onClick={generateEpics}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
+                disabled={!prd || !research}
+                className="bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
               >
                 Generate Development Plan
                 <Layout className="w-4 h-4 ml-2" />
               </Button>
+              {(!prd || !research) && (
+                <p className="text-yellow-500 text-sm mt-2">
+                  Need PRD and research to generate comprehensive epics
+                </p>
+              )}
             </div>
           )}
 
@@ -102,7 +121,7 @@ export function EpicsStep({ prd, value, onChange, onNext, onBack }: EpicsStepPro
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-orange-500 mb-4">
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                <span className="text-sm">Creating development epics and tickets...</span>
+                <span className="text-sm">Creating development epics with research insights and brainstorming context...</span>
               </div>
               <Skeleton className="h-4 w-full bg-gray-700" />
               <Skeleton className="h-4 w-3/4 bg-gray-700" />
@@ -116,13 +135,14 @@ export function EpicsStep({ prd, value, onChange, onNext, onBack }: EpicsStepPro
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-green-500">
-                  ✓ Generated {countTickets(value)} development tickets
+                  ✓ Generated {countTickets(value)} development tickets with research context
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={generateEpics}
-                  className="border-gray-600 text-gray-400 hover:text-white"
+                  disabled={!prd || !research}
+                  className="border-gray-600 text-gray-400 hover:text-white disabled:opacity-50"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Regenerate

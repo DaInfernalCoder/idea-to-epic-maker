@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,22 +13,35 @@ serve(async (req) => {
   }
 
   try {
-    const { prd } = await req.json();
+    // Now accepting full context: prd, research, AND brainstorm
+    const { prd, research, brainstorm, projectId } = await req.json();
     
-    const prompt = `You are an agile development expert specializing in breaking down PRDs into actionable development epics and tickets. Transform this PRD into a comprehensive development plan.
+    console.log('Generating epics with full context:', { 
+      hasPrd: !!prd, 
+      hasResearch: !!research, 
+      hasBrainstorm: !!brainstorm 
+    });
+    
+    const prompt = `You are an agile development expert specializing in breaking down PRDs into actionable development epics and tickets. Transform this PRD into a comprehensive development plan using the provided research and brainstorming context.
 
 Product Requirements Document:
 ${prd}
 
-Create a detailed development plan that includes:
+Technical Research Context:
+${research}
 
-1. **Epic Breakdown**: 4-6 main development epics with clear goals
-2. **Detailed Tickets**: For each epic, provide 3-5 specific, actionable tickets
+Brainstorming Results:
+${JSON.stringify(brainstorm, null, 2)}
+
+Create a detailed development plan that leverages insights from the technical research and brainstorming sessions:
+
+1. **Epic Breakdown**: 4-6 main development epics with clear goals informed by the research
+2. **Detailed Tickets**: For each epic, provide 3-5 specific, actionable tickets that consider the technical recommendations
 3. **Acceptance Criteria**: Clear, testable criteria for each ticket
-4. **Time Estimates**: Realistic estimates in days for each ticket
-5. **Dependencies**: Identify ticket dependencies and suggested order
-6. **Priority Levels**: Mark tickets as High/Medium/Low priority
-7. **Technical Notes**: Implementation hints and considerations
+4. **Time Estimates**: Realistic estimates in days for each ticket based on technical complexity from research
+5. **Dependencies**: Identify ticket dependencies and suggested order based on architecture recommendations
+6. **Priority Levels**: Mark tickets as High/Medium/Low priority considering technical risks identified in research
+7. **Technical Notes**: Implementation hints referencing specific technologies and approaches from the research
 
 Format as markdown with:
 - Clear epic sections
@@ -35,8 +49,11 @@ Format as markdown with:
 - Acceptance criteria in bullet points
 - Time estimates and priority clearly marked
 - A summary table at the end with totals
+- References to research findings where relevant
 
-Focus on making this immediately actionable for a development team to start implementation.`;
+Focus on making this immediately actionable for a development team while incorporating the technical insights and recommendations from the research phase.`;
+
+    console.log('Generating epics with Claude Sonnet 4 model and enhanced context');
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -65,6 +82,31 @@ Focus on making this immediately actionable for a development team to start impl
 
     const data = await response.json();
     const epics = data.content[0].text;
+
+    // Log the prompt if projectId is provided
+    if (projectId) {
+      try {
+        const supabase = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        await supabase.from('prompt_log').insert({
+          project_id: projectId,
+          step: 'epics',
+          prompt: prompt,
+          completion: epics,
+          model: 'claude-sonnet-4-20250514',
+          token_cost: data.usage?.input_tokens + data.usage?.output_tokens || 0
+        });
+
+        console.log('Successfully logged epics generation prompt');
+      } catch (logError) {
+        console.error('Failed to log prompt, but continuing:', logError);
+      }
+    }
+
+    console.log('Successfully generated epics with enhanced context');
 
     return new Response(
       JSON.stringify({ epics }),
