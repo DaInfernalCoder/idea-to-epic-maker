@@ -8,6 +8,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  signInAsGuest: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,7 +19,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener
+    // Check for guest mode first
+    const guestMode = localStorage.getItem('promptflow_guest_mode');
+    if (guestMode === 'true') {
+      // Create a mock user for guest mode
+      const mockUser = {
+        id: 'guest-user',
+        email: 'guest@localhost',
+        aud: 'authenticated',
+        role: 'authenticated',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        app_metadata: {},
+        user_metadata: {},
+        identities: [],
+        factors: []
+      } as User;
+      
+      setUser(mockUser);
+      setSession({ 
+        access_token: 'guest-token',
+        refresh_token: 'guest-refresh',
+        expires_in: 3600,
+        expires_at: Date.now() / 1000 + 3600,
+        token_type: 'bearer',
+        user: mockUser
+      } as Session);
+      setLoading(false);
+      return;
+    }
+
+    // Set up auth state listener for real authentication
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -38,11 +69,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Clear guest mode
+    localStorage.removeItem('promptflow_guest_mode');
+    
+    // Sign out from Supabase if not in guest mode
+    if (user?.id !== 'guest-user') {
+      await supabase.auth.signOut();
+    } else {
+      // Manual cleanup for guest mode
+      setUser(null);
+      setSession(null);
+    }
+  };
+
+  const signInAsGuest = () => {
+    localStorage.setItem('promptflow_guest_mode', 'true');
+    
+    const mockUser = {
+      id: 'guest-user',
+      email: 'guest@localhost',
+      aud: 'authenticated',
+      role: 'authenticated',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      app_metadata: {},
+      user_metadata: {},
+      identities: [],
+      factors: []
+    } as User;
+    
+    setUser(mockUser);
+    setSession({ 
+      access_token: 'guest-token',
+      refresh_token: 'guest-refresh',
+      expires_in: 3600,
+      expires_at: Date.now() / 1000 + 3600,
+      token_type: 'bearer',
+      user: mockUser
+    } as Session);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, signInAsGuest }}>
       {children}
     </AuthContext.Provider>
   );

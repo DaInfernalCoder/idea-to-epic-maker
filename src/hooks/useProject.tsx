@@ -46,7 +46,15 @@ export function useProject(): ProjectState {
       let storedProjectId = localStorage.getItem('promptflow_project_id');
       
       if (storedProjectId) {
-        // Try to load the project from Supabase
+        // For guest users, only use localStorage
+        if (user?.id === 'guest-user') {
+          setProjectId(storedProjectId);
+          loadFromLocalStorage();
+          setIsLoading(false);
+          return;
+        }
+
+        // Try to load the project from Supabase for real users
         const { data, error } = await supabase.rpc('fetch_project_state', {
           p_project_id: storedProjectId
         });
@@ -99,7 +107,8 @@ export function useProject(): ProjectState {
     const newProjectId = generateProjectId();
     
     try {
-      if (user) {
+      // Only create in Supabase for real users (not guests)
+      if (user && user.id !== 'guest-user') {
         // Create project in Supabase
         const { data, error } = await supabase
           .from('project')
@@ -141,8 +150,8 @@ export function useProject(): ProjectState {
     // Always update localStorage immediately
     localStorage.setItem(`promptflow_data_${projectId}`, JSON.stringify(newData));
 
-    // Try to sync to Supabase if user is authenticated
-    if (user) {
+    // Try to sync to Supabase if user is authenticated and not a guest
+    if (user && user.id !== 'guest-user') {
       try {
         await supabase.rpc('save_doc', {
           p_project_id: projectId,

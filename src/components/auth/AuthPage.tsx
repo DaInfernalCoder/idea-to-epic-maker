@@ -4,14 +4,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, ArrowRight, CheckCircle } from 'lucide-react';
+import { Mail, ArrowRight, CheckCircle, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export function AuthPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
   const { toast } = useToast();
+  const { signInAsGuest } = useAuth();
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +45,14 @@ export function AuthPage() {
     }
   };
 
+  const handleGuestLogin = () => {
+    signInAsGuest();
+    toast({
+      title: "Signed in as guest",
+      description: "You're now using the app in guest mode.",
+    });
+  };
+
   if (isEmailSent) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
@@ -56,13 +66,20 @@ export function AuthPage() {
               We've sent a magic link to {email}. Click the link to sign in.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             <Button
               variant="outline"
               onClick={() => setIsEmailSent(false)}
               className="w-full border-gray-600 text-gray-400 hover:text-white"
             >
               Use different email
+            </Button>
+            <Button
+              onClick={handleGuestLogin}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <UserCheck className="w-4 h-4 mr-2" />
+              Continue as Guest
             </Button>
           </CardContent>
         </Card>
@@ -116,6 +133,17 @@ export function AuthPage() {
               )}
             </Button>
           </form>
+          
+          <div className="mt-4 pt-4 border-t border-gray-700">
+            <Button
+              onClick={handleGuestLogin}
+              variant="outline"
+              className="w-full border-gray-600 text-gray-400 hover:text-white"
+            >
+              <UserCheck className="w-4 h-4 mr-2" />
+              Use as Guest (localhost only)
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
