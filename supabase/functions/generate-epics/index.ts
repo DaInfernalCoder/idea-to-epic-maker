@@ -46,7 +46,7 @@ Focus on making this immediately actionable for a development team to start impl
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-sonnet-20240229',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 4000,
         messages: [
           {
@@ -58,6 +58,8 @@ Focus on making this immediately actionable for a development team to start impl
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Claude API error: ${response.status} - ${errorText}`);
       throw new Error(`Claude API error: ${response.status}`);
     }
 
