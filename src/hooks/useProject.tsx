@@ -55,8 +55,8 @@ export function useProject(): ProjectState {
           const projectState = data[0];
           setProjectId(storedProjectId);
           
-          // Convert docs_data back to projectData format
-          const docs = projectState.docs_data || {};
+          // Convert docs_data back to projectData format with proper type assertion
+          const docs = projectState.docs_data as Record<string, any> || {};
           setProjectData({
             requirements: docs.requirements || '',
             brainstorm: docs.brainstorm || {},
