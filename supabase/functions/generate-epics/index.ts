@@ -1,6 +1,6 @@
 
-import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from "std/http/server.ts";
+import { createClient } from '@supabase/supabase-js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -110,23 +110,6 @@ Format this as an actionable development backlog with clear epics and numbered t
 
     const result = await response.json();
     const epics = result.content[0].text;
-
-    // Log the prompt for audit trail (only for authenticated users with valid projectId)
-    if (user && projectId) {
-      try {
-        await supabase.from('prompt_log').insert({
-          project_id: projectId,
-          step: 'epics',
-          prompt: prompt,
-          completion: epics,
-          model: 'claude-3-sonnet-20240229',
-          token_cost: result.usage?.output_tokens || 0
-        });
-      } catch (logError) {
-        console.error('Failed to log prompt:', logError);
-        // Don't fail the request if logging fails
-      }
-    }
 
     return new Response(JSON.stringify({ epics }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

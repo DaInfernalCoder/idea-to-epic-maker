@@ -1,6 +1,6 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "std/http/server.ts"
+import { createClient } from '@supabase/supabase-js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,30 +32,13 @@ serve(async (req) => {
 
     console.log(`Logging prompt for project ${projectId}, step ${step}, model ${model}`);
 
-    const { data, error } = await supabase
-      .from('prompt_log')
-      .insert({
-        project_id: projectId,
-        step,
-        prompt,
-        completion,
-        model,
-        token_cost: tokenCost
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error logging prompt:', error);
-      throw error;
-    }
-
-    console.log(`Successfully logged prompt with ID: ${data.id}`);
+    // Since prompt_log table was removed, we'll just return success without logging
+    console.log(`Prompt log functionality disabled - prompt_log table removed`);
 
     return new Response(
       JSON.stringify({ 
-        id: data.id,
-        created_at: data.created_at
+        id: 'disabled',
+        created_at: new Date().toISOString()
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
