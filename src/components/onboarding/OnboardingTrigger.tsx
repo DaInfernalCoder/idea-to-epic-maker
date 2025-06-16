@@ -13,6 +13,10 @@ export function OnboardingTrigger() {
     return null;
   }
 
+  const handleTakeTour = () => {
+    restartOnboarding();
+  };
+
   return (
     <Card className="bg-gray-800/50 border-gray-700 mb-6">
       <CardHeader>
@@ -31,7 +35,7 @@ export function OnboardingTrigger() {
           <Button
             variant="outline"
             size="sm"
-            onClick={restartOnboarding}
+            onClick={handleTakeTour}
             className="border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white"
           >
             <HelpCircle className="w-4 h-4 mr-2" />
