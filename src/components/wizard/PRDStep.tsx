@@ -2,10 +2,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, ArrowLeft, FileText, RefreshCw } from 'lucide-react';
+import { ArrowRight, ArrowLeft, FileText, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PRDStepProps {
   research: string;
@@ -20,8 +21,18 @@ interface PRDStepProps {
 export function PRDStep({ research, brainstorm, value, onChange, onNext, onBack, projectId }: PRDStepProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const { isGuest } = useAuth();
 
   const generatePRD = async () => {
+    if (isGuest) {
+      toast({
+        title: "Feature Limited",
+        description: "AI generation is only available for authenticated users. Please sign up or sign in to use this feature.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     
     try {
@@ -69,6 +80,19 @@ export function PRDStep({ research, brainstorm, value, onChange, onNext, onBack,
         </p>
       </div>
 
+      {isGuest && (
+        <Card className="bg-yellow-900/20 border-yellow-600">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-yellow-500">
+              <AlertTriangle className="w-5 h-5" />
+              <p className="text-sm">
+                <strong>Guest Mode:</strong> AI generation features are limited. Sign up for an account to access full functionality and save your progress to the cloud.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="bg-gray-900 border-gray-700">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
@@ -91,11 +115,17 @@ export function PRDStep({ research, brainstorm, value, onChange, onNext, onBack,
               </p>
               <Button
                 onClick={generatePRD}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
+                disabled={isGuest}
+                className="bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
               >
                 Generate PRD
                 <FileText className="w-4 h-4 ml-2" />
               </Button>
+              {isGuest && (
+                <p className="text-yellow-500 text-sm mt-2">
+                  Sign in required for AI generation
+                </p>
+              )}
             </div>
           )}
 
@@ -121,7 +151,8 @@ export function PRDStep({ research, brainstorm, value, onChange, onNext, onBack,
                   variant="outline"
                   size="sm"
                   onClick={generatePRD}
-                  className="border-gray-600 text-gray-400 hover:text-white"
+                  disabled={isGuest}
+                  className="border-gray-600 text-gray-400 hover:text-white disabled:opacity-50"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Regenerate

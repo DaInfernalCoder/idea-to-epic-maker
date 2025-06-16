@@ -2,10 +2,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, ArrowLeft, Search, RefreshCw } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Search, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ResearchStepProps {
   requirements: string;
@@ -20,8 +21,18 @@ interface ResearchStepProps {
 export function ResearchStep({ requirements, brainstorm, value, onChange, onNext, onBack, projectId }: ResearchStepProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const { isGuest } = useAuth();
 
   const generateResearch = async () => {
+    if (isGuest) {
+      toast({
+        title: "Feature Limited",
+        description: "AI generation is only available for authenticated users. Please sign up or sign in to use this feature.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     
     try {
@@ -69,6 +80,19 @@ export function ResearchStep({ requirements, brainstorm, value, onChange, onNext
         </p>
       </div>
 
+      {isGuest && (
+        <Card className="bg-yellow-900/20 border-yellow-600">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-yellow-500">
+              <AlertTriangle className="w-5 h-5" />
+              <p className="text-sm">
+                <strong>Guest Mode:</strong> AI generation features are limited. Sign up for an account to access full functionality and save your progress to the cloud.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="bg-gray-900 border-gray-700">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
@@ -91,11 +115,17 @@ export function ResearchStep({ requirements, brainstorm, value, onChange, onNext
               </p>
               <Button
                 onClick={generateResearch}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
+                disabled={isGuest}
+                className="bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
               >
                 Generate Research Report
                 <Search className="w-4 h-4 ml-2" />
               </Button>
+              {isGuest && (
+                <p className="text-yellow-500 text-sm mt-2">
+                  Sign in required for AI generation
+                </p>
+              )}
             </div>
           )}
 
@@ -121,7 +151,8 @@ export function ResearchStep({ requirements, brainstorm, value, onChange, onNext
                   variant="outline"
                   size="sm"
                   onClick={generateResearch}
-                  className="border-gray-600 text-gray-400 hover:text-white"
+                  disabled={isGuest}
+                  className="border-gray-600 text-gray-400 hover:text-white disabled:opacity-50"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Regenerate

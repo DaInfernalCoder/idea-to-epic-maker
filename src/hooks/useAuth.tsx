@@ -9,6 +9,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   signInAsGuest: () => void;
+  isGuest: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,12 +18,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     // Check for guest mode first
     const guestMode = localStorage.getItem('promptflow_guest_mode');
     if (guestMode === 'true') {
-      // Create a mock user for guest mode
+      // Create a mock user for guest mode with limitations
       const mockUser = {
         id: 'guest-user',
         email: 'guest@localhost',
@@ -31,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         app_metadata: {},
-        user_metadata: {},
+        user_metadata: { is_guest: true },
         identities: [],
         factors: []
       } as User;
@@ -45,7 +47,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token_type: 'bearer',
         user: mockUser
       } as Session);
+      setIsGuest(true);
       setLoading(false);
+
+      // Set session expiration for guest mode (24 hours)
+      const guestExpiry = localStorage.getItem('promptflow_guest_expiry');
+      if (!guestExpiry) {
+        const expiry = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+        localStorage.setItem('promptflow_guest_expiry', expiry.toString());
+      } else if (Date.now() > parseInt(guestExpiry)) {
+        // Guest session expired, clear it
+        localStorage.removeItem('promptflow_guest_mode');
+        localStorage.removeItem('promptflow_guest_expiry');
+        setUser(null);
+        setSession(null);
+        setIsGuest(false);
+      }
       return;
     }
 
@@ -54,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        setIsGuest(false);
         setLoading(false);
       }
     );
@@ -62,6 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setIsGuest(false);
       setLoading(false);
     });
 
@@ -71,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     // Clear guest mode
     localStorage.removeItem('promptflow_guest_mode');
+    localStorage.removeItem('promptflow_guest_expiry');
     
     // Sign out from Supabase if not in guest mode
     if (user?.id !== 'guest-user') {
@@ -79,11 +99,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Manual cleanup for guest mode
       setUser(null);
       setSession(null);
+      setIsGuest(false);
     }
   };
 
   const signInAsGuest = () => {
     localStorage.setItem('promptflow_guest_mode', 'true');
+    const expiry = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+    localStorage.setItem('promptflow_guest_expiry', expiry.toString());
     
     const mockUser = {
       id: 'guest-user',
@@ -93,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       app_metadata: {},
-      user_metadata: {},
+      user_metadata: { is_guest: true },
       identities: [],
       factors: []
     } as User;
@@ -107,10 +130,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token_type: 'bearer',
       user: mockUser
     } as Session);
+    setIsGuest(true);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut, signInAsGuest }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, signInAsGuest, isGuest }}>
       {children}
     </AuthContext.Provider>
   );
