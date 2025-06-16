@@ -74,25 +74,29 @@ const Projects = () => {
         if (error) throw error;
 
         // Transform the data to group docs by project
-        const transformedProjects: Project[] = (data || []).map((project: any) => {
-          const docs_data: Record<string, any> = {};
-          if (project.doc) {
-            project.doc.forEach((doc: any) => {
-              docs_data[doc.step] = doc.content;
+        const projectMap = new Map<string, Project>();
+        
+        (data || []).forEach((item: any) => {
+          if (!projectMap.has(item.id)) {
+            projectMap.set(item.id, {
+              id: item.id,
+              name: item.name,
+              created_at: item.created_at,
+              updated_at: item.updated_at,
+              user_id: item.user_id,
+              docs_data: {}
             });
           }
           
-          return {
-            id: project.id,
-            name: project.name,
-            created_at: project.created_at,
-            updated_at: project.updated_at,
-            user_id: project.user_id,
-            docs_data
-          };
+          const project = projectMap.get(item.id)!;
+          if (item.doc) {
+            item.doc.forEach((doc: any) => {
+              project.docs_data[doc.step] = doc.content;
+            });
+          }
         });
 
-        setProjects(transformedProjects);
+        setProjects(Array.from(projectMap.values()));
       } catch (error) {
         console.error('Error loading projects:', error);
       }

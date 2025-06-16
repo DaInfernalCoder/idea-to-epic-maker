@@ -71,47 +71,6 @@ export type Database = {
         }
         Relationships: []
       }
-      prompt_log: {
-        Row: {
-          completion: string | null
-          created_at: string
-          id: string
-          model: string | null
-          project_id: string
-          prompt: string
-          step: string
-          token_cost: number | null
-        }
-        Insert: {
-          completion?: string | null
-          created_at?: string
-          id?: string
-          model?: string | null
-          project_id: string
-          prompt: string
-          step: string
-          token_cost?: number | null
-        }
-        Update: {
-          completion?: string | null
-          created_at?: string
-          id?: string
-          model?: string | null
-          project_id?: string
-          prompt?: string
-          step?: string
-          token_cost?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "prompt_log_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -122,7 +81,6 @@ export type Database = {
         Returns: {
           project_data: Json
           docs_data: Json
-          recent_prompts: Json
         }[]
       }
       save_doc: {
