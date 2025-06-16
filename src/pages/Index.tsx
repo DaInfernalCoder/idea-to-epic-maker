@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { WizardStepper } from '@/components/wizard/WizardStepper';
 import { RequirementsStep } from '@/components/wizard/RequirementsStep';
@@ -8,14 +7,18 @@ import { PRDStep } from '@/components/wizard/PRDStep';
 import { EpicsStep } from '@/components/wizard/EpicsStep';
 import { CompletionStep } from '@/components/wizard/CompletionStep';
 import { AuthPage } from '@/components/auth/AuthPage';
+import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
+import { OnboardingTrigger } from '@/components/onboarding/OnboardingTrigger';
 import { useAuth } from '@/hooks/useAuth';
 import { useProject } from '@/hooks/useProject';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { Button } from '@/components/ui/button';
 import { LogOut, User } from 'lucide-react';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
   const { projectId, projectData, isLoading, updateProjectData, createNewProject } = useProject();
+  const { isOnboardingVisible, setIsOnboardingVisible } = useOnboarding();
   const [currentStep, setCurrentStep] = useState(0);
 
   if (loading) {
@@ -120,6 +123,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
+      {/* Onboarding Modal */}
+      <OnboardingModal 
+        isOpen={isOnboardingVisible} 
+        onClose={() => setIsOnboardingVisible(false)} 
+      />
+
       {/* Header */}
       <header className="border-b border-gray-800 bg-gray-950/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -154,6 +163,9 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Onboarding Trigger */}
+        <OnboardingTrigger />
+
         <div className="mb-8">
           <WizardStepper steps={steps} currentStep={currentStep} />
         </div>
