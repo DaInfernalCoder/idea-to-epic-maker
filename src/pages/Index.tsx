@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { WizardStepper } from '@/components/wizard/WizardStepper';
 import { RequirementsStep } from '@/components/wizard/RequirementsStep';
@@ -12,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProject } from '@/hooks/useProject';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, folder } from 'lucide-react';
+import { LogOut, User, Folder } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Index = () => {
@@ -65,7 +66,7 @@ const Index = () => {
         return (
           <ResearchStep
             requirements={projectData.requirements}
-            brainstorm={projectData.brainstorm}
+            brainstorm={JSON.stringify(projectData.brainstorm)}
             value={projectData.research}
             onChange={(value) => updateProjectData('research', value)}
             onNext={() => setCurrentStep(3)}
@@ -148,7 +149,7 @@ const Index = () => {
                   size="sm"
                   className="border-gray-600 text-gray-300 hover:text-white hover:border-gray-500"
                 >
-                  <folder className="w-4 h-4 mr-2" />
+                  <Folder className="w-4 h-4 mr-2" />
                   Projects
                 </Button>
               </Link>

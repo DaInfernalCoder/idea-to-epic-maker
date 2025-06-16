@@ -7,59 +7,58 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req: { method: string; headers: { get: (arg0: string) => any; }; json: () => PromiseLike<{ requirements: any; brainstorm: any; projectId: any; }> | { requirements: any; brainstorm: any; projectId: any; }; }) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Initialize Supabase client with service role for server operations
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify JWT token from the request
+    // Try to get user from token, but don't require it
+    let user = null;
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'No authorization header' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const { data, error } = await supabase.auth.getUser(token);
+        if (!error && data.user) {
+          user = data.user;
+        }
+      } catch (e) {
+        console.log('Token verification failed, proceeding as guest');
+      }
     }
 
     const { requirements, brainstorm, projectId } = await req.json();
 
     // Validate required inputs
-    if (!requirements || !projectId) {
-      return new Response(JSON.stringify({ error: 'Requirements and projectId are required' }), {
+    if (!requirements) {
+      return new Response(JSON.stringify({ error: 'Requirements are required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Verify user owns the project
-    const { data: project, error: projectError } = await supabase
-      .from('project')
-      .select('id')
-      .eq('id', projectId)
-      .eq('user_id', user.id)
-      .single();
+    // For authenticated users, verify project ownership
+    if (user && projectId) {
+      const { data: project, error: projectError } = await supabase
+        .from('project')
+        .select('id')
+        .eq('id', projectId)
+        .eq('user_id', user.id)
+        .single();
 
-    if (projectError || !project) {
-      return new Response(JSON.stringify({ error: 'Project not found or access denied' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      if (projectError || !project) {
+        return new Response(JSON.stringify({ error: 'Project not found or access denied' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     const claudeKey = Deno.env.get('CLAUDE_KEY');
@@ -111,15 +110,22 @@ Format your response as detailed technical documentation.`;
     const result = await response.json();
     const research = result.content[0].text;
 
-    // Log the prompt for audit trail
-    await supabase.from('prompt_log').insert({
-      project_id: projectId,
-      step: 'research',
-      prompt: prompt,
-      completion: research,
-      model: 'claude-3-sonnet-20240229',
-      token_cost: result.usage?.output_tokens || 0
-    });
+    // Log the prompt for audit trail (only for authenticated users with valid projectId)
+    if (user && projectId) {
+      try {
+        await supabase.from('prompt_log').insert({
+          project_id: projectId,
+          step: 'research',
+          prompt: prompt,
+          completion: research,
+          model: 'claude-3-sonnet-20240229',
+          token_cost: result.usage?.output_tokens || 0
+        });
+      } catch (logError) {
+        console.error('Failed to log prompt:', logError);
+        // Don't fail the request if logging fails
+      }
+    }
 
     return new Response(JSON.stringify({ research }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
