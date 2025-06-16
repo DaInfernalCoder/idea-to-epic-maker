@@ -1,57 +1,142 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowRight,
+  ArrowLeft,
+  Database,
+  Smartphone,
+  Shield,
+  Cloud,
+  Palette,
+  Zap,
+} from "lucide-react";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowLeft, Database, Smartphone, Shield, Cloud, Palette, Zap } from 'lucide-react';
+interface BrainstormData {
+  features: string[];
+  technologies: string[];
+  timestamp: string;
+}
 
 interface BrainstormStepProps {
-  value: any;
-  onChange: (value: any) => void;
+  value: BrainstormData;
+  onChange: (value: BrainstormData) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-export function BrainstormStep({ value, onChange, onNext, onBack }: BrainstormStepProps) {
-  const [selectedFeatures, setSelectedFeatures] = useState(value.features || []);
-  const [selectedTech, setSelectedTech] = useState(value.technologies || []);
+export function BrainstormStep({
+  value,
+  onChange,
+  onNext,
+  onBack,
+}: BrainstormStepProps) {
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>(
+    value?.features || []
+  );
+  const [selectedTech, setSelectedTech] = useState<string[]>(
+    value?.technologies || []
+  );
 
   const featureCategories = [
     {
       title: "Core Features",
       icon: Zap,
-      items: ["User Authentication", "Real-time Updates", "File Upload", "Search & Filter", "Notifications", "Comments & Reviews"]
+      items: [
+        "User Authentication",
+        "Real-time Updates",
+        "File Upload",
+        "Search & Filter",
+        "Notifications",
+        "Comments & Reviews",
+      ],
     },
     {
       title: "Data & Storage",
       icon: Database,
-      items: ["Database Integration", "Data Analytics", "Backup & Recovery", "Data Export", "API Integration", "Caching"]
+      items: [
+        "Database Integration",
+        "Data Analytics",
+        "Backup & Recovery",
+        "Data Export",
+        "API Integration",
+        "Caching",
+      ],
     },
     {
       title: "User Experience",
       icon: Palette,
-      items: ["Responsive Design", "Dark/Light Mode", "Drag & Drop", "Offline Support", "Multi-language", "Accessibility"]
+      items: [
+        "Responsive Design",
+        "Dark/Light Mode",
+        "Drag & Drop",
+        "Offline Support",
+        "Multi-language",
+        "Accessibility",
+      ],
     },
     {
       title: "Security & Auth",
       icon: Shield,
-      items: ["OAuth Integration", "Two-Factor Auth", "Role-based Access", "Data Encryption", "Audit Logs", "GDPR Compliance"]
+      items: [
+        "OAuth Integration",
+        "Two-Factor Auth",
+        "Role-based Access",
+        "Data Encryption",
+        "Audit Logs",
+        "GDPR Compliance",
+      ],
     },
     {
       title: "Mobile & Platform",
       icon: Smartphone,
-      items: ["Progressive Web App", "Mobile App", "Desktop App", "Browser Extension", "API First", "Cross-platform"]
+      items: [
+        "Progressive Web App",
+        "Mobile App",
+        "Desktop App",
+        "Browser Extension",
+        "API First",
+        "Cross-platform",
+      ],
     },
     {
       title: "Deployment & Scale",
       icon: Cloud,
-      items: ["Cloud Hosting", "CDN Integration", "Auto-scaling", "Load Balancing", "Monitoring", "CI/CD Pipeline"]
-    }
+      items: [
+        "Cloud Hosting",
+        "CDN Integration",
+        "Auto-scaling",
+        "Load Balancing",
+        "Monitoring",
+        "CI/CD Pipeline",
+      ],
+    },
   ];
 
   const technologies = [
-    "React", "Vue.js", "Angular", "Next.js", "Node.js", "Python", "Django", "FastAPI", 
-    "PostgreSQL", "MongoDB", "Redis", "AWS", "Vercel", "Docker", "Kubernetes", "TypeScript"
+    "React",
+    "Vue.js",
+    "Angular",
+    "Next.js",
+    "Node.js",
+    "Python",
+    "Django",
+    "FastAPI",
+    "PostgreSQL",
+    "MongoDB",
+    "Redis",
+    "AWS",
+    "Vercel",
+    "Docker",
+    "Kubernetes",
+    "TypeScript",
   ];
 
   const toggleFeature = (feature: string) => {
@@ -72,7 +157,7 @@ export function BrainstormStep({ value, onChange, onNext, onBack }: BrainstormSt
     onChange({
       features: selectedFeatures,
       technologies: selectedTech,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     onNext();
   };
@@ -84,7 +169,8 @@ export function BrainstormStep({ value, onChange, onNext, onBack }: BrainstormSt
           Shape Your Vision
         </h2>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-          Select the features and technologies that align with your project goals. This will guide our research and planning.
+          Select the features and technologies that align with your project
+          goals. This will guide our research and planning.
         </p>
       </div>
 
@@ -102,7 +188,9 @@ export function BrainstormStep({ value, onChange, onNext, onBack }: BrainstormSt
                 {category.items.map((item) => (
                   <Badge
                     key={item}
-                    variant={selectedFeatures.includes(item) ? "default" : "outline"}
+                    variant={
+                      selectedFeatures.includes(item) ? "default" : "outline"
+                    }
                     className={`cursor-pointer transition-all duration-200 ${
                       selectedFeatures.includes(item)
                         ? "bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
@@ -149,20 +237,30 @@ export function BrainstormStep({ value, onChange, onNext, onBack }: BrainstormSt
       {(selectedFeatures.length > 0 || selectedTech.length > 0) && (
         <Card className="bg-orange-900/20 border-orange-700">
           <CardHeader>
-            <CardTitle className="text-orange-400">Your Selection Summary</CardTitle>
+            <CardTitle className="text-orange-400">
+              Your Selection Summary
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {selectedFeatures.length > 0 && (
                 <div>
-                  <span className="text-sm font-medium text-gray-300">Features: </span>
-                  <span className="text-sm text-gray-400">{selectedFeatures.length} selected</span>
+                  <span className="text-sm font-medium text-gray-300">
+                    Features:{" "}
+                  </span>
+                  <span className="text-sm text-gray-400">
+                    {selectedFeatures.length} selected
+                  </span>
                 </div>
               )}
               {selectedTech.length > 0 && (
                 <div>
-                  <span className="text-sm font-medium text-gray-300">Technologies: </span>
-                  <span className="text-sm text-gray-400">{selectedTech.join(", ")}</span>
+                  <span className="text-sm font-medium text-gray-300">
+                    Technologies:{" "}
+                  </span>
+                  <span className="text-sm text-gray-400">
+                    {selectedTech.join(", ")}
+                  </span>
                 </div>
               )}
             </div>
@@ -171,7 +269,11 @@ export function BrainstormStep({ value, onChange, onNext, onBack }: BrainstormSt
       )}
 
       <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack} className="border-gray-600 text-gray-400 hover:text-white">
+        <Button
+          variant="outline"
+          onClick={onBack}
+          className="border-gray-600 text-gray-400 hover:text-white"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Requirements
         </Button>

@@ -9,10 +9,14 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
 
     /* Linting */
     "strict": false,
@@ -24,7 +28,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -1,15 +1,20 @@
-
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, ArrowRight, CheckCircle, UserCheck } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Mail, ArrowRight, CheckCircle, UserCheck } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 export function AuthPage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
   const { toast } = useToast();
@@ -23,8 +28,8 @@ export function AuthPage() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
+          emailRedirectTo: `${window.location.origin}/`,
+        },
       });
 
       if (error) throw error;
@@ -34,10 +39,12 @@ export function AuthPage() {
         title: "Magic link sent!",
         description: "Check your email for the sign-in link.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -76,7 +83,7 @@ export function AuthPage() {
             </Button>
             <Button
               onClick={handleGuestLogin}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white"
             >
               <UserCheck className="w-4 h-4 mr-2" />
               Continue as Guest
@@ -104,7 +111,10 @@ export function AuthPage() {
         <CardContent>
           <form onSubmit={handleEmailAuth} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-300">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-300"
+              >
                 Email address
               </label>
               <Input
@@ -133,12 +143,11 @@ export function AuthPage() {
               )}
             </Button>
           </form>
-          
+
           <div className="mt-4 pt-4 border-t border-gray-700">
             <Button
               onClick={handleGuestLogin}
-              variant="outline"
-              className="w-full border-gray-600 text-gray-400 hover:text-white"
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white"
             >
               <UserCheck className="w-4 h-4 mr-2" />
               Use as Guest (localhost only)
