@@ -12,7 +12,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProject } from '@/hooks/useProject';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { Button } from '@/components/ui/button';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, folder } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
@@ -141,6 +142,16 @@ const Index = () => {
               <h1 className="text-xl font-semibold text-white">PromptFlow</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <Link to="/projects">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-600 text-gray-300 hover:text-white hover:border-gray-500"
+                >
+                  <folder className="w-4 h-4 mr-2" />
+                  Projects
+                </Button>
+              </Link>
               <div className="text-sm text-gray-300">
                 Project: {projectId.slice(0, 8)}...
               </div>
