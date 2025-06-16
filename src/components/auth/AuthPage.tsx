@@ -12,6 +12,7 @@ import {
 import { Mail, ArrowRight, CheckCircle, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { getSiteUrl } from "@/lib/utils";
 
 export function AuthPage() {
   const [email, setEmail] = useState("");
@@ -28,7 +29,7 @@ export function AuthPage() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${getSiteUrl()}/`,
         },
       });
 
