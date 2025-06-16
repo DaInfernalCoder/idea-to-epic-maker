@@ -65,14 +65,25 @@ export function useOnboarding() {
   const [isOnboardingVisible, setIsOnboardingVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const completed = localStorage.getItem('promptflow-onboarding-completed');
-    if (!completed) {
-      setIsOnboardingVisible(true);
-    } else {
+    
+    if (completed === 'true') {
       setHasCompletedOnboarding(true);
+      setIsOnboardingVisible(false);
+    } else {
+      // Only show onboarding for truly new users, not on every refresh
+      const hasVisited = localStorage.getItem('promptflow-has-visited');
+      if (!hasVisited) {
+        localStorage.setItem('promptflow-has-visited', 'true');
+        setIsOnboardingVisible(true);
+      }
+      setHasCompletedOnboarding(false);
     }
+    
+    setIsInitialized(true);
   }, []);
 
   const nextStep = () => {
@@ -113,6 +124,7 @@ export function useOnboarding() {
     completeOnboarding,
     skipOnboarding,
     restartOnboarding,
-    setIsOnboardingVisible
+    setIsOnboardingVisible,
+    isInitialized
   };
 }

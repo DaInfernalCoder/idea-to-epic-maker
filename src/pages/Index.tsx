@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { WizardStepper } from '@/components/wizard/WizardStepper';
 import { RequirementsStep } from '@/components/wizard/RequirementsStep';
@@ -18,7 +19,7 @@ import { LogOut, User } from 'lucide-react';
 const Index = () => {
   const { user, loading, signOut } = useAuth();
   const { projectId, projectData, isLoading, updateProjectData, createNewProject } = useProject();
-  const { isOnboardingVisible, setIsOnboardingVisible } = useOnboarding();
+  const { isOnboardingVisible, setIsOnboardingVisible, isInitialized } = useOnboarding();
   const [currentStep, setCurrentStep] = useState(0);
 
   if (loading) {
@@ -123,11 +124,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      {/* Onboarding Modal */}
-      <OnboardingModal 
-        isOpen={isOnboardingVisible} 
-        onClose={() => setIsOnboardingVisible(false)} 
-      />
+      {/* Onboarding Modal - only show when properly initialized */}
+      {isInitialized && (
+        <OnboardingModal 
+          isOpen={isOnboardingVisible} 
+          onClose={() => setIsOnboardingVisible(false)} 
+        />
+      )}
 
       {/* Header */}
       <header className="border-b border-gray-800 bg-gray-950/50 backdrop-blur-sm">
@@ -137,13 +140,13 @@ const Index = () => {
               <div className="w-8 h-8 bg-orange-600 rounded-md flex items-center justify-center">
                 <span className="text-sm font-bold text-white">PF</span>
               </div>
-              <h1 className="text-xl font-semibold">PromptFlow</h1>
+              <h1 className="text-xl font-semibold text-white">PromptFlow</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-gray-300">
                 Project: {projectId.slice(0, 8)}...
               </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-400">
+              <div className="flex items-center space-x-2 text-sm text-gray-300">
                 <User className="w-4 h-4" />
                 <span>{user.email}</span>
               </div>
@@ -151,7 +154,7 @@ const Index = () => {
                 variant="outline"
                 size="sm"
                 onClick={signOut}
-                className="border-gray-600 text-gray-400 hover:text-white"
+                className="border-gray-600 text-gray-300 hover:text-white hover:border-gray-500"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign out
@@ -163,8 +166,8 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Onboarding Trigger */}
-        <OnboardingTrigger />
+        {/* Onboarding Trigger - only show when initialized */}
+        {isInitialized && <OnboardingTrigger />}
 
         <div className="mb-8">
           <WizardStepper steps={steps} currentStep={currentStep} />

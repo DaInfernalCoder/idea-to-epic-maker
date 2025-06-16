@@ -8,12 +8,13 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 export function OnboardingTrigger() {
   const { restartOnboarding, hasCompletedOnboarding } = useOnboarding();
 
+  // Only show for users who have completed onboarding (so they can retake the tour)
   if (!hasCompletedOnboarding) {
     return null;
   }
 
   return (
-    <Card className="bg-gradient-to-r from-orange-600/10 to-red-600/10 border-orange-500/20 mb-6">
+    <Card className="bg-gray-800/50 border-gray-700 mb-6">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -22,7 +23,7 @@ export function OnboardingTrigger() {
             </div>
             <div>
               <CardTitle className="text-white">Ready to Save 90% Development Time?</CardTitle>
-              <CardDescription className="text-gray-400">
+              <CardDescription className="text-gray-300">
                 Transform your ideas into detailed MVP plans with AI-powered specifications
               </CardDescription>
             </div>
@@ -31,7 +32,7 @@ export function OnboardingTrigger() {
             variant="outline"
             size="sm"
             onClick={restartOnboarding}
-            className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
+            className="border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white"
           >
             <HelpCircle className="w-4 h-4 mr-2" />
             Take Tour
@@ -44,21 +45,21 @@ export function OnboardingTrigger() {
             <Zap className="w-5 h-5 text-orange-500" />
             <div>
               <div className="text-sm font-medium text-white">Better Prompts</div>
-              <div className="text-xs text-gray-400">For Lovable, Cursor & Bolt</div>
+              <div className="text-xs text-gray-300">For Lovable, Cursor & Bolt</div>
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <Clock className="w-5 h-5 text-green-500" />
             <div>
               <div className="text-sm font-medium text-white">90% Time Saved</div>
-              <div className="text-xs text-gray-400">Hours instead of weeks</div>
+              <div className="text-xs text-gray-300">Hours instead of weeks</div>
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <Target className="w-5 h-5 text-blue-500" />
             <div>
               <div className="text-sm font-medium text-white">Clear Specs</div>
-              <div className="text-xs text-gray-400">Ready-to-build epics</div>
+              <div className="text-xs text-gray-300">Ready-to-build epics</div>
             </div>
           </div>
         </div>
