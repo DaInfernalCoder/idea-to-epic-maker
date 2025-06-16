@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,9 +11,8 @@ import {
 import {
   ArrowRight,
   ArrowLeft,
-  Layout,
+  CheckSquare,
   RefreshCw,
-  AlertTriangle,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,9 @@ interface EpicsStepProps {
   projectId?: string;
 }
 
+const GUEST_RATE_LIMIT = 8; // 8 regenerations per hour
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+
 export function EpicsStep({
   prd,
   research,
@@ -44,36 +47,70 @@ export function EpicsStep({
   const { toast } = useToast();
   const { isGuest } = useAuth();
 
+  const checkGuestRateLimit = (): boolean => {
+    if (!isGuest) return true;
+
+    const rateLimitKey = 'promptflow_guest_regenerations';
+    const now = Date.now();
+    
+    // Get existing regeneration timestamps
+    const storedData = localStorage.getItem(rateLimitKey);
+    let regenerations: number[] = [];
+    
+    if (storedData) {
+      try {
+        regenerations = JSON.parse(storedData);
+      } catch (e) {
+        regenerations = [];
+      }
+    }
+    
+    // Filter out regenerations older than 1 hour
+    regenerations = regenerations.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
+    
+    // Check if we've exceeded the limit
+    if (regenerations.length >= GUEST_RATE_LIMIT) {
+      const oldestRegeneration = Math.min(...regenerations);
+      const timeUntilReset = Math.ceil((RATE_LIMIT_WINDOW - (now - oldestRegeneration)) / (60 * 1000));
+      
+      toast({
+        title: "Rate Limit Reached",
+        description: `Guest users can make ${GUEST_RATE_LIMIT} regenerations per hour. Try again in ${timeUntilReset} minutes.`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    // Add current timestamp and save
+    regenerations.push(now);
+    localStorage.setItem(rateLimitKey, JSON.stringify(regenerations));
+    
+    return true;
+  };
+
   const generateEpics = async () => {
+    if (!checkGuestRateLimit()) return;
+    
     setIsGenerating(true);
 
     try {
-      console.log("Calling generate-epics with full context and projectId:", {
-        hasPrd: !!prd,
-        hasResearch: !!research,
-        hasBrainstorm: !!brainstorm,
-        projectId,
-      });
+      console.log("Calling generate-epics with projectId:", projectId);
 
-      const { data, error } = await supabase.functions.invoke(
-        "generate-epics",
-        {
-          body: {
-            prd,
-            research,
-            brainstorm,
-            projectId,
-          },
-        }
-      );
+      const { data, error } = await supabase.functions.invoke("generate-epics", {
+        body: {
+          prd,
+          research,
+          brainstorm,
+          projectId,
+        },
+      });
 
       if (error) throw error;
 
       onChange(data.epics);
       toast({
         title: "Epics Generated",
-        description:
-          "Development epics and tickets have been created with full context from research and brainstorming.",
+        description: "Development epics have been created successfully.",
       });
     } catch (error) {
       console.error("Error generating epics:", error);
@@ -87,65 +124,77 @@ export function EpicsStep({
     }
   };
 
-  const countTickets = (epicsText: string) => {
-    const ticketMatches = epicsText.match(/^\d+\.\s\*\*/gm);
-    return ticketMatches ? ticketMatches.length : 0;
+  const getRemainingRegenerations = (): number => {
+    if (!isGuest) return -1; // Unlimited for authenticated users
+    
+    const rateLimitKey = 'promptflow_guest_regenerations';
+    const now = Date.now();
+    
+    const storedData = localStorage.getItem(rateLimitKey);
+    let regenerations: number[] = [];
+    
+    if (storedData) {
+      try {
+        regenerations = JSON.parse(storedData);
+      } catch (e) {
+        regenerations = [];
+      }
+    }
+    
+    // Filter out regenerations older than 1 hour
+    regenerations = regenerations.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
+    
+    return Math.max(0, GUEST_RATE_LIMIT - regenerations.length);
   };
 
-  const handleNext = () => {
-    onNext();
-  };
+  const remainingRegenerations = getRemainingRegenerations();
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center space-y-4">
         <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-          Development Epics & Tickets
+          Development Epics
         </h2>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-          Break down your PRD into actionable development epics and detailed
-          tickets using insights from technical research and brainstorming.
+          Break down your PRD into actionable development epics that can guide your implementation process.
         </p>
+        {isGuest && (
+          <p className="text-sm text-orange-400">
+            Guest mode: {remainingRegenerations} regenerations remaining this hour
+          </p>
+        )}
       </div>
 
       <Card className="bg-gray-900 border-gray-700">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
-            <Layout className="w-5 h-5 text-orange-500" />
-            Development Plan
+            <CheckSquare className="w-5 h-5 text-orange-500" />
+            Development Epics
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Organized epics and tickets for agile development with technical
-            research insights
+            Structured development tasks and milestones
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!value && !isGenerating && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-orange-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Layout className="w-8 h-8 text-orange-500" />
+                <CheckSquare className="w-8 h-8 text-orange-500" />
               </div>
               <h3 className="text-lg font-medium text-white mb-2">
-                Ready to Plan Development
+                Ready to Create Epics
               </h3>
               <p className="text-gray-400 mb-6">
-                Transform your PRD into organized epics and actionable
-                development tickets using insights from technical research and
-                brainstorming.
+                Generate development epics and tasks based on your PRD and research.
               </p>
               <Button
                 onClick={generateEpics}
-                disabled={!prd || !research}
-                className="bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+                disabled={isGuest && remainingRegenerations === 0}
               >
-                Generate Development Plan
-                <Layout className="w-4 h-4 ml-2" />
+                Generate Development Epics
+                <CheckSquare className="w-4 h-4 ml-2" />
               </Button>
-              {(!prd || !research) && (
-                <p className="text-yellow-500 text-sm mt-2">
-                  Need PRD and research to generate comprehensive epics
-                </p>
-              )}
             </div>
           )}
 
@@ -154,14 +203,13 @@ export function EpicsStep({
               <div className="flex items-center gap-2 text-orange-500 mb-4">
                 <RefreshCw className="w-4 h-4 animate-spin" />
                 <span className="text-sm">
-                  Creating development epics with research insights and
-                  brainstorming context...
+                  Creating development epics and tasks...
                 </span>
               </div>
               <Skeleton className="h-4 w-full bg-gray-700" />
               <Skeleton className="h-4 w-3/4 bg-gray-700" />
               <Skeleton className="h-4 w-1/2 bg-gray-700" />
-              <Skeleton className="h-40 w-full bg-gray-700" />
+              <Skeleton className="h-20 w-full bg-gray-700" />
               <Skeleton className="h-4 w-2/3 bg-gray-700" />
             </div>
           )}
@@ -170,14 +218,13 @@ export function EpicsStep({
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-green-500">
-                  ✓ Generated {countTickets(value)} development tickets with
-                  research context
+                  ✓ Epics completed
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={generateEpics}
-                  disabled={!prd || !research || isGuest}
+                  disabled={isGuest && remainingRegenerations === 0}
                   className="border-gray-600 text-gray-400 hover:text-white disabled:opacity-50"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
@@ -204,7 +251,7 @@ export function EpicsStep({
           Back to PRD
         </Button>
         <Button
-          onClick={handleNext}
+          onClick={onNext}
           disabled={!value}
           className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-2 disabled:opacity-50"
         >

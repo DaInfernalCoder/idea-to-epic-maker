@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +30,9 @@ interface ResearchStepProps {
   projectId?: string;
 }
 
+const GUEST_RATE_LIMIT = 8; // 8 regenerations per hour
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+
 export function ResearchStep({
   requirements,
   brainstorm,
@@ -42,7 +46,50 @@ export function ResearchStep({
   const { toast } = useToast();
   const { isGuest } = useAuth();
 
+  const checkGuestRateLimit = (): boolean => {
+    if (!isGuest) return true;
+
+    const rateLimitKey = 'promptflow_guest_regenerations';
+    const now = Date.now();
+    
+    // Get existing regeneration timestamps
+    const storedData = localStorage.getItem(rateLimitKey);
+    let regenerations: number[] = [];
+    
+    if (storedData) {
+      try {
+        regenerations = JSON.parse(storedData);
+      } catch (e) {
+        regenerations = [];
+      }
+    }
+    
+    // Filter out regenerations older than 1 hour
+    regenerations = regenerations.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
+    
+    // Check if we've exceeded the limit
+    if (regenerations.length >= GUEST_RATE_LIMIT) {
+      const oldestRegeneration = Math.min(...regenerations);
+      const timeUntilReset = Math.ceil((RATE_LIMIT_WINDOW - (now - oldestRegeneration)) / (60 * 1000));
+      
+      toast({
+        title: "Rate Limit Reached",
+        description: `Guest users can make ${GUEST_RATE_LIMIT} regenerations per hour. Try again in ${timeUntilReset} minutes.`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    // Add current timestamp and save
+    regenerations.push(now);
+    localStorage.setItem(rateLimitKey, JSON.stringify(regenerations));
+    
+    return true;
+  };
+
   const generateResearch = async () => {
+    if (!checkGuestRateLimit()) return;
+    
     setIsGenerating(true);
 
     try {
@@ -82,6 +129,31 @@ export function ResearchStep({
     onNext();
   };
 
+  const getRemainingRegenerations = (): number => {
+    if (!isGuest) return -1; // Unlimited for authenticated users
+    
+    const rateLimitKey = 'promptflow_guest_regenerations';
+    const now = Date.now();
+    
+    const storedData = localStorage.getItem(rateLimitKey);
+    let regenerations: number[] = [];
+    
+    if (storedData) {
+      try {
+        regenerations = JSON.parse(storedData);
+      } catch (e) {
+        regenerations = [];
+      }
+    }
+    
+    // Filter out regenerations older than 1 hour
+    regenerations = regenerations.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
+    
+    return Math.max(0, GUEST_RATE_LIMIT - regenerations.length);
+  };
+
+  const remainingRegenerations = getRemainingRegenerations();
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center space-y-4">
@@ -92,6 +164,11 @@ export function ResearchStep({
           Our AI will analyze your requirements and brainstorming selections to
           provide comprehensive technical research and recommendations.
         </p>
+        {isGuest && (
+          <p className="text-sm text-orange-400">
+            Guest mode: {remainingRegenerations} regenerations remaining this hour
+          </p>
+        )}
       </div>
 
       <Card className="bg-gray-900 border-gray-700">
@@ -120,6 +197,7 @@ export function ResearchStep({
               <Button
                 onClick={generateResearch}
                 className="bg-orange-600 hover:bg-orange-700 text-white"
+                disabled={isGuest && remainingRegenerations === 0}
               >
                 Generate Research Report
                 <Search className="w-4 h-4 ml-2" />
@@ -153,7 +231,7 @@ export function ResearchStep({
                   variant="outline"
                   size="sm"
                   onClick={generateResearch}
-                  disabled={isGuest}
+                  disabled={isGuest && remainingRegenerations === 0}
                   className="border-gray-600 text-gray-400 hover:text-white disabled:opacity-50"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />

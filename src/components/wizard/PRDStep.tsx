@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +13,6 @@ import {
   ArrowLeft,
   FileText,
   RefreshCw,
-  AlertTriangle,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,13 +21,16 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface PRDStepProps {
   research: string;
-  brainstorm: string;
+  brainstorm: any;
   value: string;
   onChange: (value: string) => void;
   onNext: () => void;
   onBack: () => void;
   projectId?: string;
 }
+
+const GUEST_RATE_LIMIT = 8; // 8 regenerations per hour
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
 
 export function PRDStep({
   research,
@@ -42,7 +45,50 @@ export function PRDStep({
   const { toast } = useToast();
   const { isGuest } = useAuth();
 
+  const checkGuestRateLimit = (): boolean => {
+    if (!isGuest) return true;
+
+    const rateLimitKey = 'promptflow_guest_regenerations';
+    const now = Date.now();
+    
+    // Get existing regeneration timestamps
+    const storedData = localStorage.getItem(rateLimitKey);
+    let regenerations: number[] = [];
+    
+    if (storedData) {
+      try {
+        regenerations = JSON.parse(storedData);
+      } catch (e) {
+        regenerations = [];
+      }
+    }
+    
+    // Filter out regenerations older than 1 hour
+    regenerations = regenerations.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
+    
+    // Check if we've exceeded the limit
+    if (regenerations.length >= GUEST_RATE_LIMIT) {
+      const oldestRegeneration = Math.min(...regenerations);
+      const timeUntilReset = Math.ceil((RATE_LIMIT_WINDOW - (now - oldestRegeneration)) / (60 * 1000));
+      
+      toast({
+        title: "Rate Limit Reached",
+        description: `Guest users can make ${GUEST_RATE_LIMIT} regenerations per hour. Try again in ${timeUntilReset} minutes.`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    // Add current timestamp and save
+    regenerations.push(now);
+    localStorage.setItem(rateLimitKey, JSON.stringify(regenerations));
+    
+    return true;
+  };
+
   const generatePRD = async () => {
+    if (!checkGuestRateLimit()) return;
+    
     setIsGenerating(true);
 
     try {
@@ -61,8 +107,7 @@ export function PRDStep({
       onChange(data.prd);
       toast({
         title: "PRD Generated",
-        description:
-          "Product Requirements Document has been created successfully.",
+        description: "Product Requirements Document has been created successfully.",
       });
     } catch (error) {
       console.error("Error generating PRD:", error);
@@ -76,9 +121,30 @@ export function PRDStep({
     }
   };
 
-  const handleNext = () => {
-    onNext();
+  const getRemainingRegenerations = (): number => {
+    if (!isGuest) return -1; // Unlimited for authenticated users
+    
+    const rateLimitKey = 'promptflow_guest_regenerations';
+    const now = Date.now();
+    
+    const storedData = localStorage.getItem(rateLimitKey);
+    let regenerations: number[] = [];
+    
+    if (storedData) {
+      try {
+        regenerations = JSON.parse(storedData);
+      } catch (e) {
+        regenerations = [];
+      }
+    }
+    
+    // Filter out regenerations older than 1 hour
+    regenerations = regenerations.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
+    
+    return Math.max(0, GUEST_RATE_LIMIT - regenerations.length);
   };
+
+  const remainingRegenerations = getRemainingRegenerations();
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -87,9 +153,13 @@ export function PRDStep({
           Product Requirements Document
         </h2>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-          Transform your research into a comprehensive Product Requirements
-          Document that will guide development.
+          Transform your research into a comprehensive PRD that outlines your product's scope, features, and technical specifications.
         </p>
+        {isGuest && (
+          <p className="text-sm text-orange-400">
+            Guest mode: {remainingRegenerations} regenerations remaining this hour
+          </p>
+        )}
       </div>
 
       <Card className="bg-gray-900 border-gray-700">
@@ -99,7 +169,7 @@ export function PRDStep({
             Product Requirements Document
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Detailed specifications and requirements for your project
+            Detailed specifications and requirements for your product
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -112,12 +182,12 @@ export function PRDStep({
                 Ready to Create PRD
               </h3>
               <p className="text-gray-400 mb-6">
-                Generate a comprehensive Product Requirements Document based on
-                your research and brainstorming.
+                Generate a comprehensive Product Requirements Document based on your research and brainstorming.
               </p>
               <Button
                 onClick={generatePRD}
                 className="bg-orange-600 hover:bg-orange-700 text-white"
+                disabled={isGuest && remainingRegenerations === 0}
               >
                 Generate PRD
                 <FileText className="w-4 h-4 ml-2" />
@@ -130,13 +200,13 @@ export function PRDStep({
               <div className="flex items-center gap-2 text-orange-500 mb-4">
                 <RefreshCw className="w-4 h-4 animate-spin" />
                 <span className="text-sm">
-                  Creating comprehensive product requirements...
+                  Creating Product Requirements Document...
                 </span>
               </div>
               <Skeleton className="h-4 w-full bg-gray-700" />
               <Skeleton className="h-4 w-3/4 bg-gray-700" />
               <Skeleton className="h-4 w-1/2 bg-gray-700" />
-              <Skeleton className="h-32 w-full bg-gray-700" />
+              <Skeleton className="h-20 w-full bg-gray-700" />
               <Skeleton className="h-4 w-2/3 bg-gray-700" />
             </div>
           )}
@@ -145,13 +215,13 @@ export function PRDStep({
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-green-500">
-                  ✓ PRD generated successfully
+                  ✓ PRD completed
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={generatePRD}
-                  disabled={isGuest}
+                  disabled={isGuest && remainingRegenerations === 0}
                   className="border-gray-600 text-gray-400 hover:text-white disabled:opacity-50"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
@@ -178,7 +248,7 @@ export function PRDStep({
           Back to Research
         </Button>
         <Button
-          onClick={handleNext}
+          onClick={onNext}
           disabled={!value}
           className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-2 disabled:opacity-50"
         >
