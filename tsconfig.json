@@ -21,5 +21,6 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "types": ["node"]
-  }
+  },
+  "exclude": ["supabase/functions"]
 }

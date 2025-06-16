@@ -153,7 +153,7 @@ const Projects = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-gray-600 text-gray-300 hover:text-white hover:border-gray-500"
+                  className="bg-orange-600 border-orange-600 text-white hover:bg-orange-700 hover:border-orange-700"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Wizard

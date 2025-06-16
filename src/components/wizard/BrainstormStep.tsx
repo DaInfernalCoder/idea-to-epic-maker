@@ -272,7 +272,7 @@ export function BrainstormStep({
         <Button
           variant="outline"
           onClick={onBack}
-          className="border-gray-600 text-gray-400 hover:text-white"
+          className="bg-orange-600 border-orange-600 text-white hover:bg-orange-700 hover:border-orange-700"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Requirements

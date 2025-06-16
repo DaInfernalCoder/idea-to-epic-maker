@@ -232,7 +232,7 @@ export function ResearchStep({
                   size="sm"
                   onClick={generateResearch}
                   disabled={isGuest && remainingRegenerations === 0}
-                  className="border-gray-600 text-gray-400 hover:text-white disabled:opacity-50"
+                  className="bg-orange-600 border-orange-600 text-white hover:bg-orange-700 hover:border-orange-700 disabled:opacity-50 disabled:bg-gray-600 disabled:border-gray-600 disabled:text-gray-400"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Regenerate
@@ -252,7 +252,7 @@ export function ResearchStep({
         <Button
           variant="outline"
           onClick={onBack}
-          className="border-gray-600 text-gray-400 hover:text-white"
+          className="bg-orange-600 border-orange-600 text-white hover:bg-orange-700 hover:border-orange-700"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Brainstorm
