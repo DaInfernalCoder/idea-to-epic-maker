@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { WizardStepper } from '@/components/wizard/WizardStepper';
 import { RequirementsStep } from '@/components/wizard/RequirementsStep';
@@ -9,7 +8,6 @@ import { EpicsStep } from '@/components/wizard/EpicsStep';
 import { CompletionStep } from '@/components/wizard/CompletionStep';
 import { AuthPage } from '@/components/auth/AuthPage';
 import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
-import { OnboardingTrigger } from '@/components/onboarding/OnboardingTrigger';
 import { useAuth } from '@/hooks/useAuth';
 import { useProject } from '@/hooks/useProject';
 import { useOnboarding } from '@/hooks/useOnboarding';
@@ -166,9 +164,6 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Onboarding Trigger - only show when initialized */}
-        {isInitialized && <OnboardingTrigger />}
-
         <div className="mb-8">
           <WizardStepper steps={steps} currentStep={currentStep} />
         </div>
