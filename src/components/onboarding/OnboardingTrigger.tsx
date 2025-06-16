@@ -1,9 +1,14 @@
-
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { HelpCircle, Zap, Clock, Target, ArrowRight } from 'lucide-react';
-import { useOnboarding } from '@/hooks/useOnboarding';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { HelpCircle, Lightbulb, Search, Code, ArrowRight } from "lucide-react";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 export function OnboardingTrigger() {
   const { restartOnboarding, hasCompletedOnboarding } = useOnboarding();
@@ -23,12 +28,14 @@ export function OnboardingTrigger() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
-              <Target className="w-5 h-5 text-white" />
+              <Code className="w-5 h-5 text-white" />
             </div>
             <div>
-              <CardTitle className="text-white">Ready to Save 90% Development Time?</CardTitle>
+              <CardTitle className="text-white">
+                Write Better Prompts, Launch Faster
+              </CardTitle>
               <CardDescription className="text-gray-300">
-                Transform your ideas into detailed MVP plans with AI-powered specifications
+                Transform rough thoughts into development-ready specifications
               </CardDescription>
             </div>
           </div>
@@ -46,24 +53,34 @@ export function OnboardingTrigger() {
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex items-center space-x-3">
-            <Zap className="w-5 h-5 text-orange-500" />
+            <Lightbulb className="w-5 h-5 text-orange-500" />
             <div>
-              <div className="text-sm font-medium text-white">Better Prompts</div>
-              <div className="text-xs text-gray-300">For Lovable, Cursor & Bolt</div>
+              <div className="text-sm font-medium text-white">
+                Start with Ideas
+              </div>
+              <div className="text-xs text-gray-300">
+                Rough thoughts → Clear specs
+              </div>
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            <Clock className="w-5 h-5 text-green-500" />
+            <Search className="w-5 h-5 text-green-500" />
             <div>
-              <div className="text-sm font-medium text-white">90% Time Saved</div>
-              <div className="text-xs text-gray-300">Hours instead of weeks</div>
+              <div className="text-sm font-medium text-white">AI Research</div>
+              <div className="text-xs text-gray-300">
+                Technical work done for you
+              </div>
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            <Target className="w-5 h-5 text-blue-500" />
+            <Code className="w-5 h-5 text-blue-500" />
             <div>
-              <div className="text-sm font-medium text-white">Clear Specs</div>
-              <div className="text-xs text-gray-300">Ready-to-build epics</div>
+              <div className="text-sm font-medium text-white">
+                Ready Prompts
+              </div>
+              <div className="text-xs text-gray-300">
+                Copy-paste into your editor
+              </div>
             </div>
           </div>
         </div>

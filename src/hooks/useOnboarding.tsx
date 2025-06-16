@@ -1,64 +1,92 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export interface OnboardingStep {
   id: string;
   title: string;
   description: string;
-  image: string;
+  icon: string;
   features?: string[];
 }
 
 const onboardingSteps: OnboardingStep[] = [
   {
-    id: 'welcome',
-    title: 'Welcome to PromptFlow',
-    description: 'Transform your ideas into detailed MVP plans with AI-powered planning that reduces development time by 90%.',
-    image: 'photo-1486312338219-ce68d2c6f44d',
+    id: "welcome",
+    title: "Welcome to PromptFlow",
+    description:
+      "This app writes prompts for you so you can launch easier. Transform your rough thoughts into development-ready specifications in minutes.",
+    icon: "rocket",
     features: [
-      'AI-powered requirements analysis',
-      'Automated technical research',
-      'Complete PRD generation',
-      'Development epics breakdown'
-    ]
+      "Turn ideas into clear specifications",
+      "Generate perfect prompts for AI coding tools",
+      "Save weeks of planning time",
+      "Get from concept to code faster",
+    ],
   },
   {
-    id: 'better-prompts',
-    title: 'Better Prompts = Better Code',
-    description: 'Get crystal-clear requirements and technical specifications that work perfectly with Lovable, Cursor, and Bolt.',
-    image: 'photo-1461749280684-dccba630e2f6',
+    id: "requirements",
+    title: "Step 1: Requirements",
+    description:
+      "Start with your rough thoughts and ideas. Don't worry about being perfect …",
+    icon: "lightbulb",
     features: [
-      'Detailed feature specifications',
-      'Technical implementation guides',
-      'Component-level breakdowns',
-      'API and database schemas'
-    ]
+      "Share your rough ideas and vision",
+      "No need for perfect specifications",
+      "Describe your target users",
+      "Mention any technical preferences",
+    ],
   },
   {
-    id: 'workflow',
-    title: 'Your 5-Step Workflow',
-    description: 'From idea to development-ready epics in minutes, not days.',
-    image: 'photo-1649972904349-6e44c42644a7',
+    id: "brainstorm",
+    title: "Step 2: Brainstorm",
+    description:
+      "Select the key features that matter most to your project. We&apos;ll help you focus on what&apos;s essential.",
+    icon: "brain",
     features: [
-      'Requirements: Define your vision',
-      'Brainstorm: Select key features',
-      'Research: Technical analysis',
-      'PRD: Product requirements',
-      'Epics: Development tasks'
-    ]
+      "Choose from curated feature categories",
+      "Select relevant technologies",
+      "Focus on core functionality",
+      "Build a solid foundation",
+    ],
   },
   {
-    id: 'time-savings',
-    title: '90% Time Reduction',
-    description: 'Skip weeks of planning and get straight to building with AI-generated specifications.',
-    image: 'photo-1581091226825-a6a2a5aee158',
+    id: "research",
+    title: "Step 3: Research",
+    description:
+      "We do all the technical work for you - researching best practices, architecture patterns, and implementation details.",
+    icon: "search",
     features: [
-      'Hours instead of weeks for planning',
-      'No more unclear requirements',
-      'Ready-to-use prompts for AI tools',
-      'Consistent development workflow'
-    ]
-  }
+      "Automated technical research",
+      "Best practice recommendations",
+      "Architecture suggestions",
+      "Technology stack analysis",
+    ],
+  },
+  {
+    id: "prd",
+    title: "Step 4: PRD",
+    description:
+      "Get a complete Product Requirements Document with all your product&apos;s requirements clearly defined.",
+    icon: "file-text",
+    features: [
+      "Comprehensive product specifications",
+      "Clear feature definitions",
+      "Technical requirements",
+      "User stories and acceptance criteria",
+    ],
+  },
+  {
+    id: "epics",
+    title: "Step 5: Epics",
+    description:
+      "Receive development epics that you can copy and paste directly into your AI coding editor like Cursor, Bolt, or Lovable.",
+    icon: "code",
+    features: [
+      "Ready-to-use development tasks",
+      "Perfect for AI coding tools",
+      "Step-by-step implementation guide",
+      "Copy-paste into your editor",
+    ],
+  },
 ];
 
 export function useOnboarding() {
@@ -68,22 +96,74 @@ export function useOnboarding() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const completed = localStorage.getItem('promptflow-onboarding-completed');
-    
-    if (completed === 'true') {
+    const completed = localStorage.getItem("promptflow-onboarding-completed");
+    const isGuestMode =
+      localStorage.getItem("promptflow_guest_mode") === "true";
+
+    if (completed === "true" && !isGuestMode) {
+      // Authenticated user who has completed onboarding
       setHasCompletedOnboarding(true);
       setIsOnboardingVisible(false);
+    } else if (isGuestMode) {
+      // Guest mode - always show onboarding unless they've explicitly skipped it in this session
+      const guestOnboardingSkipped = sessionStorage.getItem(
+        "promptflow-guest-onboarding-skipped"
+      );
+      if (!guestOnboardingSkipped) {
+        setIsOnboardingVisible(true);
+        setHasCompletedOnboarding(false);
+      } else {
+        setHasCompletedOnboarding(true);
+        setIsOnboardingVisible(false);
+      }
     } else {
-      // Only show onboarding for truly new users, not on every refresh
-      const hasVisited = localStorage.getItem('promptflow-has-visited');
+      // New authenticated user - show onboarding only once
+      const hasVisited = localStorage.getItem("promptflow-has-visited");
       if (!hasVisited) {
-        localStorage.setItem('promptflow-has-visited', 'true');
+        localStorage.setItem("promptflow-has-visited", "true");
         setIsOnboardingVisible(true);
       }
       setHasCompletedOnboarding(false);
     }
-    
+
     setIsInitialized(true);
+  }, []);
+
+  // Listen for guest mode changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const isGuestMode =
+        localStorage.getItem("promptflow_guest_mode") === "true";
+      if (isGuestMode) {
+        const guestOnboardingSkipped = sessionStorage.getItem(
+          "promptflow-guest-onboarding-skipped"
+        );
+        if (!guestOnboardingSkipped) {
+          setCurrentStep(0);
+          setIsOnboardingVisible(true);
+          setHasCompletedOnboarding(false);
+        }
+      }
+    };
+
+    const handleGuestModeActivated = () => {
+      // Clear any previous session storage and show onboarding
+      sessionStorage.removeItem("promptflow-guest-onboarding-skipped");
+      setCurrentStep(0);
+      setIsOnboardingVisible(true);
+      setHasCompletedOnboarding(false);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("guestModeActivated", handleGuestModeActivated);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(
+        "guestModeActivated",
+        handleGuestModeActivated
+      );
+    };
   }, []);
 
   const nextStep = () => {
@@ -99,7 +179,17 @@ export function useOnboarding() {
   };
 
   const completeOnboarding = () => {
-    localStorage.setItem('promptflow-onboarding-completed', 'true');
+    const isGuestMode =
+      localStorage.getItem("promptflow_guest_mode") === "true";
+
+    if (isGuestMode) {
+      // For guest mode, mark as completed for this session only
+      sessionStorage.setItem("promptflow-guest-onboarding-skipped", "true");
+    } else {
+      // For authenticated users, mark as permanently completed
+      localStorage.setItem("promptflow-onboarding-completed", "true");
+    }
+
     setIsOnboardingVisible(false);
     setHasCompletedOnboarding(true);
   };
@@ -109,6 +199,14 @@ export function useOnboarding() {
   };
 
   const restartOnboarding = () => {
+    setCurrentStep(0);
+    setIsOnboardingVisible(true);
+    setHasCompletedOnboarding(false);
+  };
+
+  const triggerGuestOnboarding = () => {
+    // Clear the session storage flag and show onboarding
+    sessionStorage.removeItem("promptflow-guest-onboarding-skipped");
     setCurrentStep(0);
     setIsOnboardingVisible(true);
     setHasCompletedOnboarding(false);
@@ -124,7 +222,8 @@ export function useOnboarding() {
     completeOnboarding,
     skipOnboarding,
     restartOnboarding,
+    triggerGuestOnboarding,
     setIsOnboardingVisible,
-    isInitialized
+    isInitialized,
   };
 }
