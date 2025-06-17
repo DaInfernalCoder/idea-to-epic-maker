@@ -18,44 +18,18 @@ interface Project {
 }
 
 const Projects = () => {
-  const { user, loading, isGuest } = useAuth();
+  const { user, loading } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadProjects();
-  }, [user, isGuest]);
+  }, [user]);
 
   const loadProjects = async () => {
     setIsLoading(true);
     
-    if (isGuest) {
-      // For guest users, load from localStorage
-      const guestProjects: Project[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key?.startsWith('promptflow_data_')) {
-          const projectId = key.replace('promptflow_data_', '');
-          const data = localStorage.getItem(key);
-          if (data) {
-            try {
-              const projectData = JSON.parse(data);
-              guestProjects.push({
-                id: projectId,
-                name: `Project ${projectId.slice(0, 8)}`,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                user_id: 'guest',
-                docs_data: projectData
-              });
-            } catch (e) {
-              console.error('Error parsing project data:', e);
-            }
-          }
-        }
-      }
-      setProjects(guestProjects);
-    } else if (user) {
+    if (user) {
       // For authenticated users, load from Supabase
       try {
         const { data, error } = await supabase
@@ -172,7 +146,7 @@ const Projects = () => {
               Your Projects
             </h2>
             <p className="text-gray-400 text-lg mt-2">
-              {isGuest ? 'Projects stored locally in your browser' : 'All your generated project plans and documentation'}
+              All your generated project plans and documentation
             </p>
           </div>
           <Link to="/">

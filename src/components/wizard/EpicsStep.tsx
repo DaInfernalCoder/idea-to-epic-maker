@@ -17,7 +17,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 
 interface EpicsStepProps {
   prd: string;
@@ -29,9 +28,6 @@ interface EpicsStepProps {
   onBack: () => void;
   projectId?: string;
 }
-
-const GUEST_RATE_LIMIT = 8; // 8 regenerations per hour
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
 
 export function EpicsStep({
   prd,
@@ -45,52 +41,8 @@ export function EpicsStep({
 }: EpicsStepProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
-  const { isGuest } = useAuth();
-
-  const checkGuestRateLimit = (): boolean => {
-    if (!isGuest) return true;
-
-    const rateLimitKey = 'promptflow_guest_regenerations';
-    const now = Date.now();
-    
-    // Get existing regeneration timestamps
-    const storedData = localStorage.getItem(rateLimitKey);
-    let regenerations: number[] = [];
-    
-    if (storedData) {
-      try {
-        regenerations = JSON.parse(storedData);
-      } catch (e) {
-        regenerations = [];
-      }
-    }
-    
-    // Filter out regenerations older than 1 hour
-    regenerations = regenerations.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
-    
-    // Check if we've exceeded the limit
-    if (regenerations.length >= GUEST_RATE_LIMIT) {
-      const oldestRegeneration = Math.min(...regenerations);
-      const timeUntilReset = Math.ceil((RATE_LIMIT_WINDOW - (now - oldestRegeneration)) / (60 * 1000));
-      
-      toast({
-        title: "Rate Limit Reached",
-        description: `Guest users can make ${GUEST_RATE_LIMIT} regenerations per hour. Try again in ${timeUntilReset} minutes.`,
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    // Add current timestamp and save
-    regenerations.push(now);
-    localStorage.setItem(rateLimitKey, JSON.stringify(regenerations));
-    
-    return true;
-  };
 
   const generateEpics = async () => {
-    if (!checkGuestRateLimit()) return;
-    
     setIsGenerating(true);
 
     try {
@@ -124,31 +76,6 @@ export function EpicsStep({
     }
   };
 
-  const getRemainingRegenerations = (): number => {
-    if (!isGuest) return -1; // Unlimited for authenticated users
-    
-    const rateLimitKey = 'promptflow_guest_regenerations';
-    const now = Date.now();
-    
-    const storedData = localStorage.getItem(rateLimitKey);
-    let regenerations: number[] = [];
-    
-    if (storedData) {
-      try {
-        regenerations = JSON.parse(storedData);
-      } catch (e) {
-        regenerations = [];
-      }
-    }
-    
-    // Filter out regenerations older than 1 hour
-    regenerations = regenerations.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
-    
-    return Math.max(0, GUEST_RATE_LIMIT - regenerations.length);
-  };
-
-  const remainingRegenerations = getRemainingRegenerations();
-
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center space-y-4">
@@ -158,11 +85,6 @@ export function EpicsStep({
         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
           Break down your PRD into actionable development epics that can guide your implementation process.
         </p>
-        {isGuest && (
-          <p className="text-sm text-orange-400">
-            Guest mode: {remainingRegenerations} regenerations remaining this hour
-          </p>
-        )}
       </div>
 
       <Card className="bg-gray-900 border-gray-700">
@@ -190,7 +112,6 @@ export function EpicsStep({
               <Button
                 onClick={generateEpics}
                 className="bg-orange-600 hover:bg-orange-700 text-white"
-                disabled={isGuest && remainingRegenerations === 0}
               >
                 Generate Development Epics
                 <CheckSquare className="w-4 h-4 ml-2" />
@@ -224,8 +145,7 @@ export function EpicsStep({
                   variant="outline"
                   size="sm"
                   onClick={generateEpics}
-                  disabled={isGuest && remainingRegenerations === 0}
-                  className="bg-orange-600 border-orange-600 text-white hover:bg-orange-700 hover:border-orange-700 disabled:opacity-50 disabled:bg-gray-600 disabled:border-gray-600 disabled:text-gray-400"
+                  className="bg-orange-600 border-orange-600 text-white hover:bg-orange-700 hover:border-orange-700"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Regenerate

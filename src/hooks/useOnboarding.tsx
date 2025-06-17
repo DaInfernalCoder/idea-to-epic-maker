@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 export interface OnboardingStep {
@@ -97,27 +98,11 @@ export function useOnboarding() {
 
   useEffect(() => {
     const completed = localStorage.getItem("promptflow-onboarding-completed");
-    const isGuestMode =
-      localStorage.getItem("promptflow_guest_mode") === "true";
 
-    if (completed === "true" && !isGuestMode) {
-      // Authenticated user who has completed onboarding
+    if (completed === "true") {
       setHasCompletedOnboarding(true);
       setIsOnboardingVisible(false);
-    } else if (isGuestMode) {
-      // Guest mode - always show onboarding unless they've explicitly skipped it in this session
-      const guestOnboardingSkipped = sessionStorage.getItem(
-        "promptflow-guest-onboarding-skipped"
-      );
-      if (!guestOnboardingSkipped) {
-        setIsOnboardingVisible(true);
-        setHasCompletedOnboarding(false);
-      } else {
-        setHasCompletedOnboarding(true);
-        setIsOnboardingVisible(false);
-      }
     } else {
-      // New authenticated user - show onboarding only once
       const hasVisited = localStorage.getItem("promptflow-has-visited");
       if (!hasVisited) {
         localStorage.setItem("promptflow-has-visited", "true");
@@ -127,43 +112,6 @@ export function useOnboarding() {
     }
 
     setIsInitialized(true);
-  }, []);
-
-  // Listen for guest mode changes
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const isGuestMode =
-        localStorage.getItem("promptflow_guest_mode") === "true";
-      if (isGuestMode) {
-        const guestOnboardingSkipped = sessionStorage.getItem(
-          "promptflow-guest-onboarding-skipped"
-        );
-        if (!guestOnboardingSkipped) {
-          setCurrentStep(0);
-          setIsOnboardingVisible(true);
-          setHasCompletedOnboarding(false);
-        }
-      }
-    };
-
-    const handleGuestModeActivated = () => {
-      // Clear any previous session storage and show onboarding
-      sessionStorage.removeItem("promptflow-guest-onboarding-skipped");
-      setCurrentStep(0);
-      setIsOnboardingVisible(true);
-      setHasCompletedOnboarding(false);
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("guestModeActivated", handleGuestModeActivated);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener(
-        "guestModeActivated",
-        handleGuestModeActivated
-      );
-    };
   }, []);
 
   const nextStep = () => {
@@ -179,17 +127,7 @@ export function useOnboarding() {
   };
 
   const completeOnboarding = () => {
-    const isGuestMode =
-      localStorage.getItem("promptflow_guest_mode") === "true";
-
-    if (isGuestMode) {
-      // For guest mode, mark as completed for this session only
-      sessionStorage.setItem("promptflow-guest-onboarding-skipped", "true");
-    } else {
-      // For authenticated users, mark as permanently completed
-      localStorage.setItem("promptflow-onboarding-completed", "true");
-    }
-
+    localStorage.setItem("promptflow-onboarding-completed", "true");
     setIsOnboardingVisible(false);
     setHasCompletedOnboarding(true);
   };
@@ -199,14 +137,6 @@ export function useOnboarding() {
   };
 
   const restartOnboarding = () => {
-    setCurrentStep(0);
-    setIsOnboardingVisible(true);
-    setHasCompletedOnboarding(false);
-  };
-
-  const triggerGuestOnboarding = () => {
-    // Clear the session storage flag and show onboarding
-    sessionStorage.removeItem("promptflow-guest-onboarding-skipped");
     setCurrentStep(0);
     setIsOnboardingVisible(true);
     setHasCompletedOnboarding(false);
@@ -222,7 +152,6 @@ export function useOnboarding() {
     completeOnboarding,
     skipOnboarding,
     restartOnboarding,
-    triggerGuestOnboarding,
     setIsOnboardingVisible,
     isInitialized,
   };

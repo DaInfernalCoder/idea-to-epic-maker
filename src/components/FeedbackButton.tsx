@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ export function FeedbackButton() {
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const { submitFeedback, isSubmitting, error } = useFeedback();
-  const { user, isGuest } = useAuth();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +67,6 @@ export function FeedbackButton() {
             <DialogDescription>
               Help us improve by sharing your thoughts, suggestions, or
               reporting issues.
-              {isGuest && " Your feedback will be submitted anonymously."}
             </DialogDescription>
           </DialogHeader>
 
