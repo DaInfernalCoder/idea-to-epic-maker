@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -18,8 +19,10 @@ import {
   Search,
   FileText,
   Code,
+  User,
 } from "lucide-react";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
+import { ProfileStep } from "./ProfileStep";
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -59,6 +62,8 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     switch (iconName) {
       case "rocket":
         return <Rocket {...iconProps} />;
+      case "user":
+        return <User {...iconProps} />;
       case "lightbulb":
         return <Lightbulb {...iconProps} />;
       case "brain":
@@ -73,6 +78,44 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         return <Rocket {...iconProps} />;
     }
   };
+
+  // Handle profile step specially
+  if (step.id === "profile") {
+    return (
+      <Dialog open={isOpen} onOpenChange={() => {}}>
+        <DialogContent className="max-w-4xl bg-gray-900 border-gray-700 text-white">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-2xl font-bold text-orange-500">
+                Get Started with PromptFlow
+              </DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSkip}
+                className="text-gray-400 hover:text-white"
+              >
+                Skip tour
+              </Button>
+            </div>
+            <div className="mt-4">
+              <Progress value={progress} className="h-2" />
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <span>
+                  Step {currentStep + 1} of {onboardingSteps.length}
+                </span>
+                <span>{Math.round(progress)}% complete</span>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="py-6">
+            <ProfileStep onNext={nextStep} onBack={prevStep} />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>

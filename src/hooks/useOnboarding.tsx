@@ -24,6 +24,13 @@ const onboardingSteps: OnboardingStep[] = [
     ],
   },
   {
+    id: "profile",
+    title: "Tell us about yourself",
+    description:
+      "Help us improve PromptFlow by sharing a bit about how you found us and how we can stay in touch.",
+    icon: "user",
+  },
+  {
     id: "requirements",
     title: "Step 1: Requirements",
     description:

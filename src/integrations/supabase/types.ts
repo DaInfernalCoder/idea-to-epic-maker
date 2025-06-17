@@ -77,6 +77,30 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          how_heard_about_us: string | null
+          id: string
+          preferred_contact_method: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          how_heard_about_us?: string | null
+          id: string
+          preferred_contact_method?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          how_heard_about_us?: string | null
+          id?: string
+          preferred_contact_method?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       project: {
         Row: {
           created_at: string

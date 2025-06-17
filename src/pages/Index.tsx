@@ -156,8 +156,17 @@ const Index = () => {
               <div className="text-sm text-gray-300">
                 Project: {projectId.slice(0, 8)}...
               </div>
+              <Link to="/profile">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-orange-600 border-orange-600 text-white hover:bg-orange-700 hover:border-orange-700"
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </Button>
+              </Link>
               <div className="flex items-center space-x-2 text-sm text-gray-300">
-                <User className="w-4 h-4" />
                 <span>{user.email}</span>
               </div>
               <Button
