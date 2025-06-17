@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,17 +10,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Mail, ArrowRight, CheckCircle, UserCheck } from "lucide-react";
+import { Mail, ArrowRight, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 import { getSiteUrl } from "@/lib/utils";
 
 export function AuthPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
   const { toast } = useToast();
-  const { signInAsGuest } = useAuth();
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,12 +53,29 @@ export function AuthPage() {
     }
   };
 
-  const handleGuestLogin = () => {
-    signInAsGuest();
-    toast({
-      title: "Signed in as guest",
-      description: "You're now using the app in guest mode.",
-    });
+  const handleGoogleAuth = async () => {
+    setIsGoogleLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${getSiteUrl()}/`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   if (isEmailSent) {
@@ -81,13 +98,6 @@ export function AuthPage() {
               className="w-full border-gray-600 text-gray-400 hover:text-white"
             >
               Use different email
-            </Button>
-            <Button
-              onClick={handleGuestLogin}
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-            >
-              <UserCheck className="w-4 h-4 mr-2" />
-              Continue as Guest
             </Button>
           </CardContent>
         </Card>
@@ -147,11 +157,14 @@ export function AuthPage() {
 
           <div className="mt-4 pt-4 border-t border-gray-700">
             <Button
-              onClick={handleGuestLogin}
+              onClick={handleGoogleAuth}
+              disabled={isGoogleLoading}
               className="w-full bg-orange-600 hover:bg-orange-700 text-white"
             >
-              <UserCheck className="w-4 h-4 mr-2" />
-              Use as Guest (localhost only)
+              <div className="w-4 h-4 mr-2 bg-white rounded-sm flex items-center justify-center">
+                <span className="text-xs font-bold text-orange-600">PF</span>
+              </div>
+              {isGoogleLoading ? "Signing in..." : "Continue with Google"}
             </Button>
           </div>
         </CardContent>
