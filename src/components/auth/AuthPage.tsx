@@ -60,7 +60,7 @@ export function AuthPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${getSiteUrl()}/`,
+          redirectTo: getSiteUrl(),
         },
       });
 
@@ -73,7 +73,6 @@ export function AuthPage() {
         description: errorMessage,
         variant: "destructive",
       });
-    } finally {
       setIsGoogleLoading(false);
     }
   };
