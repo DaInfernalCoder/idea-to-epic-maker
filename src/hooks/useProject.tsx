@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
-import { generateProjectId } from "@/lib/utils";
+import { generateProjectId, isValidUUID, clearMalformedProjectData } from "@/lib/utils";
 
 interface BrainstormData {
   features: string[];
@@ -41,6 +41,8 @@ export function useProject(): ProjectState {
   // Load project data when user is authenticated
   useEffect(() => {
     if (user) {
+      // Clear any malformed project data first
+      clearMalformedProjectData();
       loadOrCreateProject();
     }
   }, [user]);
@@ -68,6 +70,14 @@ export function useProject(): ProjectState {
         if (projects && projects.length > 0) {
           const project = projects[0];
           console.log("Found existing project:", project.id);
+          
+          // Validate that the project ID is a proper UUID
+          if (!isValidUUID(project.id)) {
+            console.log("Project has malformed ID, creating new project");
+            await createNewProject();
+            return;
+          }
+          
           setProjectId(project.id);
           localStorage.setItem("promptflow_project_id", project.id);
 
@@ -113,10 +123,14 @@ export function useProject(): ProjectState {
 
   const loadFromLocalStorage = () => {
     let storedProjectId = localStorage.getItem("promptflow_project_id");
-    if (!storedProjectId) {
+    
+    // Check if stored project ID is valid, if not generate a new one
+    if (!storedProjectId || !isValidUUID(storedProjectId)) {
+      console.log("Generating new project ID due to missing or invalid stored ID");
       storedProjectId = generateProjectId();
       localStorage.setItem("promptflow_project_id", storedProjectId);
     }
+    
     setProjectId(storedProjectId);
 
     // Load existing project data from localStorage
