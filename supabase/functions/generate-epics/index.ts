@@ -18,19 +18,27 @@ serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Try to get user from token, but don't require it
+    // Get user from token - improved authentication handling
     let user = null;
     const authHeader = req.headers.get('Authorization');
     
     if (authHeader) {
       try {
         const token = authHeader.replace('Bearer ', '');
-        const { data, error } = await supabase.auth.getUser(token);
-        if (!error && data.user) {
+        console.log('Attempting to get user with token');
+        
+        // Use the anon client for token verification
+        const anonClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!);
+        const { data, error } = await anonClient.auth.getUser(token);
+        
+        if (error) {
+          console.log('Token verification error:', error.message);
+        } else if (data.user) {
           user = data.user;
+          console.log('User authenticated:', user.id, user.email);
         }
       } catch (e) {
-        console.log('Token verification failed, proceeding as guest');
+        console.log('Authentication failed:', e.message);
       }
     }
 
@@ -46,6 +54,7 @@ serve(async (req: Request) => {
 
     // For authenticated users, verify project ownership
     if (user && projectId) {
+      console.log(`Checking project ownership for user ${user.id} and project ${projectId}`);
       const { data: project, error: projectError } = await supabase
         .from('project')
         .select('id')
@@ -54,11 +63,13 @@ serve(async (req: Request) => {
         .single();
 
       if (projectError || !project) {
+        console.log('Project verification failed:', projectError?.message);
         return new Response(JSON.stringify({ error: 'Project not found or access denied' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+      console.log('Project ownership verified');
     }
 
     const claudeKey = Deno.env.get('CLAUDE_KEY');
@@ -85,6 +96,7 @@ Please break down the development work into:
 
 Format this as an actionable development backlog with clear epics and numbered tickets.`;
 
+    console.log('Calling Claude API for epics generation');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -111,6 +123,7 @@ Format this as an actionable development backlog with clear epics and numbered t
     const result = await response.json();
     const epics = result.content[0].text;
 
+    console.log('Epics generation completed successfully');
     return new Response(JSON.stringify({ epics }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
