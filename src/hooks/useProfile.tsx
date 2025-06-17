@@ -41,7 +41,14 @@ export function useProfile() {
         return;
       }
 
-      setProfile(data);
+      if (data) {
+        // Cast the preferred_contact_method to the correct type
+        const profileData: UserProfile = {
+          ...data,
+          preferred_contact_method: data.preferred_contact_method as 'phone' | 'twitter' | 'email' | null
+        };
+        setProfile(profileData);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
@@ -67,7 +74,14 @@ export function useProfile() {
         return false;
       }
 
-      setProfile(data);
+      if (data) {
+        // Cast the preferred_contact_method to the correct type
+        const profileData: UserProfile = {
+          ...data,
+          preferred_contact_method: data.preferred_contact_method as 'phone' | 'twitter' | 'email' | null
+        };
+        setProfile(profileData);
+      }
       return true;
     } catch (error) {
       console.error('Error updating profile:', error);
