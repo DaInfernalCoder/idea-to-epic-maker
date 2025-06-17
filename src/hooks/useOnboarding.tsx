@@ -1,5 +1,7 @@
 
 import { useState, useEffect } from "react";
+import { useAuth } from "./useAuth";
+import { useProfile } from "./useProfile";
 
 export interface OnboardingStep {
   id: string;
@@ -98,28 +100,48 @@ const onboardingSteps: OnboardingStep[] = [
 ];
 
 export function useOnboarding() {
+  const { user } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
   const [isOnboardingVisible, setIsOnboardingVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const completed = localStorage.getItem("promptflow-onboarding-completed");
+    // Don't initialize until we have user and profile data
+    if (!user || profileLoading) {
+      return;
+    }
 
-    if (completed === "true") {
+    const completed = localStorage.getItem("promptflow-onboarding-completed");
+    
+    // Check if user has completed profile questions
+    const hasCompletedProfile = profile && (
+      profile.how_heard_about_us !== null || 
+      profile.preferred_contact_method !== null
+    );
+
+    if (completed === "true" && hasCompletedProfile) {
       setHasCompletedOnboarding(true);
       setIsOnboardingVisible(false);
     } else {
+      // Show onboarding for:
+      // 1. New users who haven't seen it before
+      // 2. Users who haven't completed their profile (including Google/MagicLink users)
       const hasVisited = localStorage.getItem("promptflow-has-visited");
-      if (!hasVisited) {
+      
+      if (!hasVisited || !hasCompletedProfile) {
         localStorage.setItem("promptflow-has-visited", "true");
         setIsOnboardingVisible(true);
+        setHasCompletedOnboarding(false);
+      } else {
+        setHasCompletedOnboarding(false);
+        setIsOnboardingVisible(false);
       }
-      setHasCompletedOnboarding(false);
     }
 
     setIsInitialized(true);
-  }, []);
+  }, [user, profile, profileLoading]);
 
   const nextStep = () => {
     if (currentStep < onboardingSteps.length - 1) {
