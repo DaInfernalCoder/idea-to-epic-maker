@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
@@ -10,7 +11,7 @@ interface FeedbackData {
 export function useFeedback() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user, isGuest } = useAuth();
+  const { user } = useAuth();
 
   const submitFeedback = async (data: FeedbackData) => {
     setIsSubmitting(true);
@@ -19,7 +20,7 @@ export function useFeedback() {
     try {
       const feedbackData = {
         message: data.message,
-        user_id: isGuest ? null : user?.id || null,
+        user_id: user?.id || null,
         user_email: data.user_email || user?.email || null,
         user_agent: navigator.userAgent,
       };
